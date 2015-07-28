@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+
+*.pydevproject
+.project
+.metadata
+bin/**
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+ 
+# CDT-specific
+.cproject
+
+#PYCHARM
+.idea/
+
+#Resources
+#src/resources
+
