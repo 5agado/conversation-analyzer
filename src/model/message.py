@@ -1,7 +1,9 @@
 from datetime import datetime
 
 class Message:
-    DATE_TIME_FORMAT = '%Y.%m.%d %H:%M:%S'
+    DATE_FORMAT = '%Y.%m.%d'
+    TIME_FORMAT = '%H:%M:%S'
+    DATE_TIME_FORMAT = DATE_FORMAT + ' ' + TIME_FORMAT
 
     def __init__(self, date, time, sender, text):
         self.date = date

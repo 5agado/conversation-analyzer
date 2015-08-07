@@ -26,7 +26,7 @@ def main(_):
     args = parser.parse_args()
     filepath = args.filepath
     numMsgs = args.numMsgs
-    wCountLimit= args.wCountLimit
+    wCountLimit = args.wCountLimit
 
     CONFIG_FILEPATH = "..\\config.ini"
     STATS_SECTION = "Stats"
@@ -38,7 +38,10 @@ def main(_):
     P_WORDS_COUNT = config.get(STATS_SECTION, "P_WORDS_COUNT")
     P_WORDS_MENTIONING = config.get(STATS_SECTION, "P_WORDS_MENTIONING")
     P_AGG_STATS = config.get(STATS_SECTION, "P_AGG_STATS")
+    P_DELAY_STATS = config.get(STATS_SECTION, "P_DELAY_STATS")
+    P_EMOTICONS_STATS = config.get(STATS_SECTION, "P_EMOTICONS_STATS")
 
+    initLogger()
     conv = Conversation(filepath)
     conv.loadMessages(numMsgs)
 
@@ -55,13 +58,17 @@ def main(_):
         mio.printWordsMentioningToFile(conv)
 
     if P_AGG_STATS:
-        mio.printAgglomeratedStatsToFile(lambda m:m.getHour(), 'Hours', conv)
-        mio.printAgglomeratedStatsToFile(lambda m:m.date, 'Day', conv)
-        mio.printAgglomeratedStatsToFile(lambda m:m.getMonth(), 'Month', conv)
-        mio.printAgglomeratedStatsToFile(lambda m:m.getYear(), 'Year', conv)
-        mio.printAgglomeratedStatsToFile(lambda m:m.getWeekDay(), 'WeekDay', conv)
+        mio.printAgglomeratedStatsToFile(lambda m: m.getHour(), 'Hours', conv)
+        mio.printAgglomeratedStatsToFile(lambda m: m.date, 'Day', conv)
+        mio.printAgglomeratedStatsToFile(lambda m: m.getMonth(), 'Month', conv)
+        mio.printAgglomeratedStatsToFile(lambda m: m.getYear(), 'Year', conv)
+        mio.printAgglomeratedStatsToFile(lambda m: m.getWeekDay(), 'WeekDay', conv)
 
-    initLogger()
+    if P_DELAY_STATS:
+        mio.printDelayStatsFor(conv)
+
+    if P_EMOTICONS_STATS:
+        mio.printEmoticonStatsToFile(lambda m: m.date, 'EmoticonDay', conv)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

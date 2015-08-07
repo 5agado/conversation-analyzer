@@ -23,5 +23,5 @@ local.properties
 .idea/
 
 #Resources
-#src/resources
+src/resources/tmp
 
