@@ -1,4 +1,6 @@
 #from model.conversation import Conversation
+from datetime import datetime, timedelta
+import collections
 from src.util import io as mio
 import argparse
 from src.util import stats as mstats
@@ -14,6 +16,7 @@ from matplotlib import pyplot as plt
 import os
 from scipy.stats.stats import pearsonr
 import numpy as np
+import nltk
 from sklearn import datasets, linear_model
 
 def initLogger():
@@ -30,7 +33,7 @@ def init(_):
     parser = argparse.ArgumentParser(description='Conversation Analyzer')
     parser.add_argument('-p', metavar='conversationfilePath', dest='filepath', required=True)
     parser.add_argument('-n', metavar='numberOfMessages', type=int,
-                        dest='numMsgs', default=10000)
+                        dest='numMsgs', default=1000)
     parser.add_argument('-l', metavar='wordsCountLimit', type=int,
                         dest='wCountLimit', default=20)
 
@@ -40,11 +43,47 @@ def init(_):
     wCountLimit = args.wCountLimit
 
     initLogger()
-    conv = Conversation(mio.getResourcesPath() + "\\unittest\\test_delay_conv.txt")
+    conv = Conversation(mio.getResourcesPath() + "\\unittest\\test_nltk_conv.txt")
     #conv = Conversation(filepath)
     conv.loadMessages(numMsgs)
-    print(mstats.getDelayStatsByLength(conv))
+    rawText = conv.getEntireConvText()
+    mio.displayDispersionPlot(conv, ['sender1', ':D', 'well'])
+    mio.showConcordance(conv, "phone")
+    #tokens = nltk.word_tokenize(rawText)
+    #words = [w.lower() for w in tokens]
+    mio.printAllLexicalStats(conv)
 
+def drawParse(conv):
+    rawText = conv.getEntireConvText()
+    #tokens = nltk.word_tokenize(rawText)
+    #words = [w.lower() for w in tokens]
+    words = mstats.getWords(conv.messages)
+    sentences = nltk.sent_tokenize(rawText)
+    sentences = [nltk.word_tokenize(sent) for sent in sentences]
+    sentences = [nltk.pos_tag(sent) for sent in sentences]
+    #text.generate()
+    #for m in conv.messages:
+    #    print(nltk.sent_tokenize(m.text))
+
+    from nltk.corpus import conll2000
+    test_sents = conll2000.chunked_sents('test.txt', chunk_types=['NP'])
+    train_sents = conll2000.chunked_sents('train.txt', chunk_types =['NP'])
+    chunker = ChunkParser(train_sents)
+
+    for s in sentences:
+        chunker.parse(s).draw()
+
+class ChunkParser(nltk.ChunkParserI):
+    def __init__(self, train_sents):
+        train_data = [[(t,c) for w,t,c in nltk.chunk.tree2conlltags(sent)] for sent in train_sents]
+        self.tagger = nltk.TrigramTagger(train_data)
+
+    def parse(self, sentence):
+        pos_tags= [pos for (word,pos) in sentence]
+        tagged_pos_tags = self.tagger.tag(pos_tags)
+        chunktags = [chunktag for (pos,chunktag) in tagged_pos_tags]
+        conlltags = [(word,pos,chunktag) for ((word,pos), chunktag) in zip(sentence,chunktags)]
+        return nltk.chunk.conlltags2tree(conlltags)
 
 def plotDelayByLengthStats(conv):
     delay, senderDelay = mstats.getDelayStatsByLength(conv)

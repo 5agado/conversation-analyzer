@@ -17,7 +17,7 @@ def initLogger():
 
 def main(_):
     parser = argparse.ArgumentParser(description='Conversation Analyzer')
-    parser.add_argument('-p', metavar='conversationfilePath', dest='filepath', required=True)
+    parser.add_argument('-p', metavar='conversationFilePath', dest='filepath', required=True)
     parser.add_argument('-n', metavar='numberOfMessages', type=int,
                         dest='numMsgs', default=110)
     parser.add_argument('-l', metavar='wordsCountLimit', type=int,
@@ -40,6 +40,7 @@ def main(_):
     P_AGG_STATS = config.get(STATS_SECTION, "P_AGG_STATS")
     P_DELAY_STATS = config.get(STATS_SECTION, "P_DELAY_STATS")
     P_EMOTICONS_STATS = config.get(STATS_SECTION, "P_EMOTICONS_STATS")
+    P_LEXICAL_STATS = config.get(STATS_SECTION, "P_LEXICAL_STATS")
 
     initLogger()
     conv = Conversation(filepath)
@@ -47,6 +48,9 @@ def main(_):
 
     if P_BASIC_LENGTH_STATS:
         mio.printAllBasicLengthStats(conv)
+
+    if P_LEXICAL_STATS:
+        mio.printAllLexicalStats(conv)
 
     if P_INTERVAL_STATS:
         mio.printIntervalStatsFor(conv)

@@ -4,6 +4,7 @@ import statistics
 import numpy as np
 import pandas as pd
 import re
+import nltk
 import logging
 import src.util.io as mio
 import math
@@ -37,6 +38,14 @@ def getBasicLengthStats(messages):
 
     return len(messages), totalLength, totalLength/len(messages)
 
+def getLexicalStats(messages):
+    words = getWords(messages)
+    text = nltk.Text(words)
+    tokensCount = len(text)
+    vocabularyCount = len(set(text))
+    lexicalRichness = vocabularyCount / tokensCount
+    return  tokensCount, vocabularyCount, lexicalRichness
+
 def getEmoticonsStats(messages):
     numEmoticons = 0
     if len(messages) == 0:
@@ -46,6 +55,7 @@ def getEmoticonsStats(messages):
         numEmoticons += len(mEmoticons)
     return numEmoticons
 
+#TODO make it for all messages one time. Include in previous one, collect all text
 def getEmoticonsFromMessage(message):
     emoticons = mio.getSetFromFile(mio.getResourcesPath() + "\emoticonList.txt")
     words = map(lambda w: cleanWord(str.lower(w), emoticons), message.text.split())
@@ -73,7 +83,7 @@ def getDaysWithoutMessages(messages):
     return days
 
 #TODO still specific for just two senders
-def getDelayStatsFor(conv):
+def getDelayStatsFor(messages):
     """Calculates the delays between the messages of the conversation.
     overallDelay consider all separated messages
     senderDelay consider the time that passed between a sender message and the successive reply
@@ -81,11 +91,12 @@ def getDelayStatsFor(conv):
      Notice that if the same sender sends many message, only the last one (before another sender message)
      is taken into consideration"""
 
-    senderDelay = {conv.sender1+ ':' +conv.sender2: timedelta(0), conv.sender2+ ':' +conv.sender1: timedelta(0)}
+    senderDelay = collections.defaultdict(timedelta)
+    #senderDelay = {conv.sender1+ ':' +conv.sender2: timedelta(0), conv.sender2+ ':' +conv.sender1: timedelta(0)}
     overallDelay = timedelta(0)
-    prevSender = conv.messages[0].sender
-    prevDatetime = datetime.strptime(conv.messages[0].datetime, Message.DATE_TIME_FORMAT)
-    for m in conv.messages[1:]:
+    prevSender = messages[0].sender
+    prevDatetime = datetime.strptime(messages[0].datetime, Message.DATE_TIME_FORMAT)
+    for m in messages[1:]:
         currentDatetime = datetime.strptime(m.datetime, Message.DATE_TIME_FORMAT)
         currentSender = m.sender
         thisDelay = currentDatetime - prevDatetime
@@ -97,14 +108,15 @@ def getDelayStatsFor(conv):
 
     return overallDelay, senderDelay
 
-def getDelayStatsByLength(conv):
+def getDelayStatsByLength(messages):
     delay = ([])
-    senderDelay = {conv.sender1+ ':' +conv.sender2: [], conv.sender2+ ':' +conv.sender1: []}
-    prevSender = conv.messages[0].sender
-    prevDatetime = datetime.strptime(conv.messages[0].datetime, Message.DATE_TIME_FORMAT)
+    senderDelay = collections.defaultdict(list)
+    #senderDelay = {conv.sender1+ ':' +conv.sender2: [], conv.sender2+ ':' +conv.sender1: []}
+    prevSender = messages[0].sender
+    prevDatetime = datetime.strptime(messages[0].datetime, Message.DATE_TIME_FORMAT)
     #TODO Consider the option to sum all messages length until reply
-    msgLen = conv.messages[0].getMessageLength()
-    for m in conv.messages[1:]:
+    msgLen = messages[0].getMessageLength()
+    for m in messages[1:]:
         currentDatetime = datetime.strptime(m.datetime, Message.DATE_TIME_FORMAT)
         currentSender = m.sender
         thisDelay = currentDatetime - prevDatetime
@@ -117,12 +129,13 @@ def getDelayStatsByLength(conv):
 
     return delay, senderDelay
 
-def getSequentialMessagesStats(conv):
+def getSequentialMessagesStats(messages):
     numOfSeqMsgs = collections.defaultdict(int)
-    senderDelay = {conv.sender1: timedelta(0), conv.sender2: timedelta(0)}
-    prevSender = conv.messages[0].sender
-    prevDatetime = datetime.strptime(conv.messages[0].datetime, Message.DATE_TIME_FORMAT)
-    for m in conv.messages[1:]:
+    senderDelay = collections.defaultdict(timedelta)
+    #senderDelay = {conv.sender1: timedelta(0), conv.sender2: timedelta(0)}
+    prevSender = messages[0].sender
+    prevDatetime = datetime.strptime(messages[0].datetime, Message.DATE_TIME_FORMAT)
+    for m in messages[1:]:
         currentDatetime = datetime.strptime(m.datetime, Message.DATE_TIME_FORMAT)
         currentSender = m.sender
         thisDelay = currentDatetime - prevDatetime
@@ -135,93 +148,18 @@ def getSequentialMessagesStats(conv):
 
     return numOfSeqMsgs, senderDelay
 
-#TODO Use index label instead of number
-def generateDataFrameAgglomeratedStatsBy(mFun, messages, sender1, sender2):
-    agglomeratedMessages = getMessagesBy(mFun, messages)
-    aggBasicLengthStatsS1 = [getBasicLengthStats(list(filter(lambda m: m.sender == sender1, a)))
-                             for _, a in agglomeratedMessages.items()]
-    aggBasicLengthStatsS2 = [getBasicLengthStats(list(filter(lambda m: m.sender == sender2, a)))
-                             for _, a in agglomeratedMessages.items()]
-    s1y1 = [i[0] for i in aggBasicLengthStatsS1]
-    s1y2 = [i[1] for i in aggBasicLengthStatsS1]
-    s1y3 = [i[2] for i in aggBasicLengthStatsS1]
-    s2y1 = [i[0] for i in aggBasicLengthStatsS2]
-    s2y2 = [i[1] for i in aggBasicLengthStatsS2]
-    s2y3 = [i[2] for i in aggBasicLengthStatsS2]
-    toty1 = list(sum(t) for t in zip(s1y1, s2y1))
-    toty2 = list(sum(t) for t in zip(s1y2, s2y2))
-    toty3 = [l/n if n != 0 else 0 for (n, l) in zip(toty1, toty2)]
-
-    data = np.array([s1y1, s2y1, s1y2, s2y2, s1y3, s2y3, toty1, toty2, toty3]).T
-    c = [sender1 + '_numMsgs', sender2 + '_numMsgs',
-         sender1 + '_lenMsgs', sender2 + '_lenMsgs',
-         sender1 + '_avgLen', sender2 + '_avgLen',
-         'totNumMsgs', 'totLenMsgs', 'totAvgLen']
-    df = pd.DataFrame(data, index=list(agglomeratedMessages.keys()), columns=c)
-    return df
-
-def generateDataFrameEmoticoStatsBy(mFun, messages, sender1, sender2):
-    df = generateDataFrameAgglomeratedStatsBy(mFun, messages, sender1, sender2)
-
-    #TODO operation repeated
-    agglomeratedMessages = getMessagesBy(mFun, messages)
-    emoticonStatsS1 = [getEmoticonsStats(list(filter(lambda m: m.sender == sender1, a)))
-                             for _, a in agglomeratedMessages.items()]
-    emoticonStatsS2 = [getEmoticonsStats(list(filter(lambda m: m.sender == sender2, a)))
-                             for _, a in agglomeratedMessages.items()]
-    totEmoStats = list(sum(t) for t in zip(emoticonStatsS1, emoticonStatsS2))
-    s1Ratio = [n/l if l != 0 else 0 for (n, l) in zip(emoticonStatsS1, df.ix[:, 2])]
-    s2Ratio = [n/l if l != 0 else 0 for (n, l) in zip(emoticonStatsS2, df.ix[:, 3])]
-    totRatio = [n/l if l != 0 else 0 for (n, l) in zip(totEmoStats, df.ix[:, 7])]
-
-    df[sender1 + '_numEmoticons'] = np.array(emoticonStatsS1)
-    df[sender2 + '_numEmoticons'] = np.array(emoticonStatsS2)
-    df['totnumEmoticons'] = np.array(totEmoStats)
-    df[sender1 + '_emoticonsRatio'] = np.array(s1Ratio)
-    df[sender2 + '_emoticonsRatio'] = np.array(s2Ratio)
-    df['totEmoticonsRatio'] = np.array(totRatio)
-    return df
-
-def generateDataFrameSingleWordCountBy(mFun, word, messages, sender1, sender2):
-    df = generateDataFrameAgglomeratedStatsBy(mFun, messages, sender1, sender2)
-    wOcc1, wOcc2 = getSingleWordCountBy(word, mFun, messages, sender1, sender2)
-
-    s1Count = [y for (x, y) in wOcc1]
-    s2Count = [y for (x, y) in wOcc2]
-    totCount = [c1+c2 for (c1,c2) in zip(s1Count, s2Count)]
-
-    #TODO ??already add ratio
-    df[sender1 + '_count'] = np.array(s1Count)
-    df[sender2 + '_count'] = np.array(s2Count)
-    df['totnumEmoticons'] = np.array(totCount)
-    return df
-
-def getWordsCountBy(mFun, messages, sender1, sender2):
-    agglomeratedMessages = getMessagesBy(mFun, messages)
-    #wordsFrequencyStats = getWordsCount(messages)
-    wordsFrequencyStatsS1 = [(d, getWordsCount(list(filter(lambda m: m.sender == sender1, a))))
-                             for d, a in agglomeratedMessages.items()]
-    wordsFrequencyStatsS2 = [(d, getWordsCount(list(filter(lambda m: m.sender == sender2, a))))
-                             for d, a in agglomeratedMessages.items()]
-    #return  wordsFrequencyStats, wordsFrequencyStatsS1, wordsFrequencyStatsS2
-    return  wordsFrequencyStatsS1, wordsFrequencyStatsS2
-
-def getSingleWordCountBy(word, mFun, messages, sender1, sender2):
-    wordsFrequencyStatsS1, wordsFrequencyStatsS2 = getWordsCountBy(mFun, messages, sender1, sender2)
-    wordFrequencyS1 = [(by, count[word]) if word in count else (by, 0) for (by, count) in wordsFrequencyStatsS1]
-    wordFrequencyS2 = [(by, count[word]) if word in count else (by, 0) for (by, count) in wordsFrequencyStatsS2]
-
-    return  wordFrequencyS1, wordFrequencyS2
-
 def getWordsCount(messages):
+    wordsCount = collections.Counter(getWords(messages))
+    return wordsCount
+
+def getWords(messages):
     #TODO consider using regex for emoticon structure; e.g. :DDD, xDDD
     emoticons = mio.getSetFromFile(mio.getResourcesPath() + "\emoticonList.txt")
-    wordsCount = collections.Counter([])
+    words = []
     for m in messages:
-        words = map(lambda w: cleanWord(str.lower(w), emoticons), m.text.split())
-        words = list(filter(lambda w: len(w) > 0, words))
-        wordsCount += collections.Counter(words)
-    return wordsCount
+        mText = m.text.lower()
+        words += list(filter(lambda w: len(w) > 0, [cleanWord(w, emoticons) for w in mText.split()]))
+    return words
 
 def cleanWord(word, skipSet):
     if word in skipSet:
@@ -234,16 +172,13 @@ def cleanWord(word, skipSet):
         #         f.write(word + "\n")
         return cWord
 
-def getWordsCountStats(messages, sender1Messages, sender2Messages, limit = 0):
+def getWordsCountStats(messages, limit = 0):
     wCount = getWordsCount(messages)
-    wCountS1 = getWordsCount(sender1Messages)
-    wCountS2 = getWordsCount(sender2Messages)
+
     if limit == 0:
-        return wCount, wCountS1, wCountS2
+        return wCount
     else:
-        return wCount.most_common(limit),\
-               wCountS1.most_common(limit),\
-               wCountS2.most_common(limit)
+        return wCount.most_common(limit)
 
 def getWordsMentioningStats(sender1Messages, sender2Messages):
     wordsSaidBySender1 = getWordsCount(sender1Messages).keys()

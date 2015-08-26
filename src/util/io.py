@@ -8,7 +8,7 @@ def parseMessagesFromFile(filePath, limit = 0):
     messages = []
     senders = set([])
     try:
-        with open(filePath, encoding="utf8") as f:
+        with open(filePath, 'r', encoding="utf8") as f:
             for line in f:
                 date, time, sender, text = line.split(' ', 3)
                 messages.append(Message(date, time, sender, text.strip()))
@@ -26,11 +26,19 @@ def loadDataFromFile(filepath):
 def getSetFromFile(filePath):
     theSet = set([])
     try:
-        with open(filePath) as f:
+        with open(filePath, 'r') as f:
             theSet = {line.strip() for line in f}
     except IOError:
         logging.warning("No such file " + filePath)
     return theSet
+
+def displayDispersionPlot(conv, words):
+    text = conv.getAsNLTKText()
+    text.dispersion_plot(words)
+
+def showConcordance(conv, word):
+    text = conv.getAsNLTKText()
+    text.concordance(word)
 
 def printWordsCountToFile(conv, limit=0):
     wCount, wCountS1, wCountS2 = conv.getWordsCountStats(limit)
@@ -84,6 +92,23 @@ def printAllBasicLengthStats(conv):
     printBasicLengthStats(conv, conv.sender1)
     logging.info("#" + conv.sender2)
     printBasicLengthStats(conv, conv.sender2)
+    logging.info('-'*10)
+
+def printLexicalStats(conv, sender=None):
+    tokensCount, vocabularyCount, lexicalRichness = conv.getLexicalStats(sender)
+
+    logging.info("Tokens count: {}".format(tokensCount))
+    logging.info("Distinct tokens count: {}".format(vocabularyCount))
+    logging.info("Lexical diversity: {0:.2f}".format(lexicalRichness))
+
+def printAllLexicalStats(conv):
+    logging.info("##Lexical stats")
+    logging.info("#Overall")
+    printLexicalStats(conv)
+    logging.info("#" + conv.sender1)
+    printLexicalStats(conv, conv.sender1)
+    logging.info("#" + conv.sender2)
+    printLexicalStats(conv, conv.sender2)
     logging.info('-'*10)
 
 def printIntervalStatsFor(conv):

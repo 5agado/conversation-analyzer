@@ -1,16 +1,25 @@
 # Conversation Analyzer
 Analyzer and statistics generator for text-based conversations.
 
-Current conversation format example:
+Includes scraper and parser for Facebook conversations. 
+
+The scraper retrieves all messages of a specific Facebook conversation and saves them in a JSON file. At this step messages include all fields and attributes as defined by the Facebook response format.
+
+The parser takes as input the result of the scraper and extracts only the "relevant" messages and related attributes, for then saving them to a text file. Such file is used as input for the conversation analyzer.  
+Conversation format example (based on the current parser):
 
     2012.06.17 15:27:42 SENDER_1 Message text from sender1
     2012.06.18 17:27:42 SENDER_2 Message text from sender2
 
 ##Usage
-In order to use it just run the main.py script contained in the top-level folder.
-See the help menu (-h or --help) for a detailed usage description.
+Each of the three components (i.e. scraper, parser, analyzer) can be accessed separately. 
+The analyzer can be accessed via the main.py script contained in the top-level folder.
+Scraper and parser are instead inside the util folder. 
 
-Basic configurations can be managed via the config.ini file.
+For each see the help menu (-h or --help) for a detailed usage description.
+
+Basic configurations for the analyzer can be managed via the config.ini file.
+Here can be provided also the credentials data needed by the scraper to access the Facebook conversation. 
 
 ##Stats
 ###Conv Interval
@@ -21,11 +30,9 @@ Days without messages
 
 ###Basic length stats
 Total number of messages  
-Total number of messages per sender  
 Total length of messages   
-Total length of messages per sender  
 Message average length  
-Message average length per sender  
+(all previous) by sender  
 
 ###Agglomeration Stats
 (all previous) by hour  
@@ -41,13 +48,17 @@ Message average length per sender
 (all previous) variance  
 (all previous) standard deviation  
 
-###Words Count
-Words count  
-Words count by sender  
-Best words count  
-Best words count by sender  
-Word occurences by message agglomeration
-Word occurences by message agglomeration by sender
+###Words Count (??Should be words occurrences)
+Words count   
+Best words count    
+Word occurrences by messages agglomeration    
+(all previous) by sender  
+  
+###Lexical Stats
+Tokens count  
+Distinct tokens count  
+Lexical diversity  
+(all previous) by sender  
 
 ###Words Mentioning
 Words said by all senders  
@@ -56,18 +67,18 @@ Words said by one sender but not by the others
 ###Reply Delay
 Reply delay (does overall delay make sense?)  
 Reply delay by sender (conversation with two senders)  
-Reply delay by messsage length
+Reply delay by message length
 
 ##Sequential Messages
 Num of sequential messages by sender   
 Delay between sequential messages by sender  
 
 ##Emoticons Stats
-Total number of emoticons
-Total number of emoticons per sender
+Total number of emoticons  
+Total number of emoticons per sender  
 
-(all previous) by day
-(all previous) by month
+(all previous) by day  
+(all previous) by month  
 
 ##TODO
     * NLP analyses for message, also sentiment analysis and similar
