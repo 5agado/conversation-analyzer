@@ -1,7 +1,9 @@
-from src.model.message import Message
+from model.message import Message
 import logging
 import os
+import pandas as pd
 from pandas import read_csv
+import numpy as np
 from collections import OrderedDict
 
 def parseMessagesFromFile(filePath, limit = 0):
@@ -94,12 +96,27 @@ def printAllBasicLengthStats(conv):
     printBasicLengthStats(conv, conv.sender2)
     logging.info('-'*10)
 
+def printBasicLengthStatsToFile(conv):
+    filepath = conv.statsFolder + '\\' + 'BasicLength' + 'Stats.txt'
+    totalNum, totalLength, avgLegth = conv.getBasicLengthStats()
+    totalNumS1, totalLengthS1, avgLegthS1 = conv.getBasicLengthStats(conv.sender1)
+    totalNumS2, totalLengthS2, avgLegthS2 = conv.getBasicLengthStats(conv.sender2)
+    data = np.array([[totalNumS1], [totalNumS2], [totalLengthS1],
+                     [totalLengthS2], [avgLegthS1], [avgLegthS2],
+                     [totalNum], [totalLength], [avgLegth]]).T
+    c = [conv.sender1 + '_numMsgs', conv.sender2 + '_numMsgs',
+         conv.sender1 + '_lenMsgs', conv.sender2 + '_lenMsgs',
+         conv.sender1 + '_avgLen', conv.sender2 + '_avgLen',
+         'totNumMsgs', 'totLenMsgs', 'totAvgLen']
+    df = pd.DataFrame(data, columns=c)
+    printDataFrameToFile('Basic Length', df, filepath)
+
 def printLexicalStats(conv, sender=None):
     tokensCount, vocabularyCount, lexicalRichness = conv.getLexicalStats(sender)
 
     logging.info("Tokens count: {}".format(tokensCount))
     logging.info("Distinct tokens count: {}".format(vocabularyCount))
-    logging.info("Lexical diversity: {0:.2f}".format(lexicalRichness))
+    logging.info("Lexical diversity: {0:.5f}".format(lexicalRichness))
 
 def printAllLexicalStats(conv):
     logging.info("##Lexical stats")
@@ -128,12 +145,11 @@ def printIntervalStatsFor(conv):
     logging.info('-'*10)
 
 def printDelayStatsFor(conv):
-    overallDelay, delay = conv.getDelayStats()
+    delay = conv.getDelayStats()
     logging.info("##Reply Delay Stats")
-    logging.info("Overall reply delay: {}".format(overallDelay))
     logging.info("Reply delay by sender: ")
     for s, d in delay.items():
-        msg = "Betwenn {} and {}".format(s.split(':')[0], s.split(':')[1])
+        msg = "Between {} and {}".format(s.split(':')[0], s.split(':')[1])
         logging.info('{} : {}'.format(msg, d))
     logging.info('-'*10)
 

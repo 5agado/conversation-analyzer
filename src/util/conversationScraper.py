@@ -5,7 +5,6 @@ import os
 import json
 import sys
 import time
-import io
 import argparse
 import configparser
 import logging
@@ -19,16 +18,11 @@ class ConversationScraper:
     ERROR_WAIT = 30
     CONVERSATION_ENDMARK = "end_of_history"
 
-    def __init__(self, convID, offset, chunkSize, cookie, fb_dtsg, userID, outDir):
+    def __init__(self, convID, cookie, fb_dtsg, outDir):
         self._directory = outDir + "/" + str(convID) + "/"
         self._convID = convID
-        self._timestamp = ""
-        self._offset = offset
-        self._chunkSize = chunkSize
         self._cookie = cookie
         self._fb_dtsg = fb_dtsg
-        self._userID = userID
-
 
     """
     POST Request full form data:
@@ -46,13 +40,13 @@ class ConversationScraper:
     "__rev": ""
 
     """
-    def generateRequestData(self):
+    def generateRequestData(self, offset, timestamp, chunkSize):
         """Generate the data for the POST request.
          :return: the generated data
         """
-        dataForm = {"messages[user_ids][" + str(self._convID) + "][offset]": str(self._offset),
-                     "messages[user_ids][" + str(self._convID) + "][timestamp]": self._timestamp,
-                     "messages[user_ids][" + str(self._convID) + "][limit]": str(self._chunkSize),
+        dataForm = {"messages[user_ids][" + str(self._convID) + "][offset]": str(offset),
+                     "messages[user_ids][" + str(self._convID) + "][timestamp]": timestamp,
+                     "messages[user_ids][" + str(self._convID) + "][limit]": str(chunkSize),
                      "client": "web_messenger",
                      "__a": "",
                      "__dyn": "",
@@ -103,12 +97,20 @@ class ConversationScraper:
             with gzip.GzipFile(fileobj=response) as uncompressed:
                 decompressedFile = uncompressed.read()
         end = time.time()
-        logging.info("Retrieved in {}s".format(end-start))
-        return  decompressedFile.decode("utf-8")
+        logging.info("Retrieved in {0:.2f}s".format(end-start))
+        #Remove additional leading characters
+        msgsData = decompressedFile.decode("utf-8")[9:]
+        return  msgsData
 
-    def scrapeConversation(self, merge):
+    def writeMessages(self, messages):
+        with open(self._directory + "conversation.json", 'w') as conv:
+            conv.write(json.dumps(messages))
+        command = "python -mjson.tool " + self._directory + "conversation.json > " + self._directory + "conversation.pretty.json"
+        os.system(command)
+
+    def scrapeConversation(self, merge, offset, timestampOffset, chunkSize, limit):
         """Retrieves all conversation messages and stores them in a JSON file
-        If merge is specified, then new messages are merged the the previously already scraped conversation
+        If merge is specified, then new messages are merged with the previously already scraped conversation
         """
 
         if not os.path.exists(self._directory):
@@ -124,88 +126,84 @@ class ConversationScraper:
             with open(self._directory + "conversation.json") as conv:
                 convMessages = json.load(conv)
         msgsData = ""
+        timestamp = "" if timestampOffset == 0 else str(timestampOffset)
         while self.CONVERSATION_ENDMARK not in msgsData:
-            reqData = self.generateRequestData()
-            #TODO remove timestamp info
-            print("Retrieving messages " + str(self._offset) + "-" + str(self._chunkSize+self._offset) + ", timestamp " + self._timestamp)
-            responseData = self.executeRequest(reqData)
-            #Remove additional leading characters
-            msgsData = responseData[9:]
+            requestChunkSize = chunkSize if limit <= 0 else min(chunkSize, limit-numMsgs)
+            reqData = self.generateRequestData(offset, timestamp, requestChunkSize)
+            logging.info("Retrieving messages " + str(offset) + "-" + str(requestChunkSize+offset))
+            msgsData = self.executeRequest(reqData)
             jsonData = json.loads(msgsData)
 
-            numMsgs = 0
             if jsonData and jsonData['payload']:
-                try:
-                    actions = jsonData['payload']['actions']
-                    numMsgs += len(actions)
+                actions = jsonData['payload']['actions']
 
-                    #case when the last message already present in the conversation
-                    #is older newer than the first one of the current retrieved chunk
-                    #print(str(convMessages[-1]["timestamp"]) + " > " + str(actions[0]["timestamp"]))
-                    if merge and convMessages[-1]["timestamp"] > actions[0]["timestamp"]:
-                        print(str(convMessages[-1]["timestamp"]) + " > " + str(actions[0]["timestamp"]))
-                        for i, action in enumerate(actions):
-                            if convMessages[-1]["timestamp"] == actions[i]["timestamp"]:
-                                print("Found same message: " + actions[i]["timestamp"])
-                                messages = convMessages + actions[i+1:-1] + messages
-                                break
-                        break
+                #case when the last message already present in the conversation
+                #is older newer than the first one of the current retrieved chunk
+                #print(str(convMessages[-1]["timestamp"]) + " > " + str(actions[0]["timestamp"]))
+                if merge and convMessages[-1]["timestamp"] > actions[0]["timestamp"]:
+                    for i, action in enumerate(actions):
+                        if convMessages[-1]["timestamp"] == actions[i]["timestamp"]:
+                            messages = convMessages + actions[i+1:-1] + messages
+                            break
+                    break
 
-                    #We retrieve one message two times, as the first one of the previous chunk
-                    #and as the last one of the new one. So we here remove the duplicate,
-                    #but only once we already retrieved at least one chunk
-                    if len(messages) == 0:
-                        messages = actions
-                    else:
-                        messages = actions[:-1] + messages
+                #We retrieve one message two times, as the first one of the previous chunk
+                #and as the last one of the new one. So we here remove the duplicate,
+                #but only once we already retrieved at least one chunk
+                if len(messages) == 0:
+                    messages = actions
+                else:
+                    messages = actions[:-1] + messages
 
-                    #update timestamp
-                    try:
-                        self._timestamp = str(actions[0]["timestamp"])
-                    except KeyError:
-                        print(actions[0])
-                except KeyError:
-                    logging.warning("No payload or actions in response")
-                    pass
+                #update timestamp
+                timestamp = str(actions[0]["timestamp"])
             else:
                 logging.error("Response error. Empty data or payload")
+                logging.error(msgsData)
                 logging.info("Retrying in " + str(self.ERROR_WAIT) + " seconds")
                 time.sleep(self.ERROR_WAIT)
                 continue
 
-            # outPath = directory + str(self._offset) + "-" + str(self._chunkSize+self._offset) + ".json"
-            # with open(outPath, 'w') as out:
-            #     out.write(msgsData)
-            # command = "python -mjson.tool " + outPath + " > " + pretty_directory + str(self._offset) + "-" + str(self._chunkSize+self._offset) + ".pretty.json"
-            # os.system(command)
+            offset += chunkSize
+            if limit!= 0 and len(messages) >= limit:
+                break
 
-            self._offset += self._chunkSize
-            logging.info("Waiting {}s for the next request".format(self.REQUEST_WAIT))
             time.sleep(self.REQUEST_WAIT)
 
-        logging.info("Conversation scraped successfully. {} messages retrieved".format(numMsgs))
+        logging.info("Conversation scraped successfully. {} messages retrieved".format(len(messages)))
 
-        with open(self._directory + "conversation.json", 'w') as conv:
-            conv.write(json.dumps(messages))
-        command = "python -mjson.tool " + self._directory + "conversation.json > " + self._directory + "conversation.pretty.json"
-        os.system(command)
+        self.writeMessages(messages)
 
 def main(_):
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     parser = argparse.ArgumentParser(description='Conversation Scraper')
-    parser.add_argument('-id', metavar='conversationID', dest='convID', required=True)
-    parser.add_argument('-sz', metavar='chunkSize', type=int, dest='chunkSize', default=2000)
-    parser.add_argument('-off', metavar='offset', type=int, dest='offset', default=0)
-    #Tells the program to try to merge the new messages of a previously already scraped conversation
+    parser.add_argument('--id', metavar='conversationID', dest='convID', required=True)
+    parser.add_argument('--size', metavar='chunkSize', type=int, dest='chunkSize', default=2000,
+                        help="number of messages to retrieve for each request")
+    #TODO not working, the timestamp seems the only relevant parameter
+    parser.add_argument('--off', metavar='offset', type=int, dest='offset', default=0,
+                        help="messages number scraping offset")
+    #TODO to test, ??better single var
+    parser.add_argument('--date', metavar='offset', type=int, dest='timestampOffset', default=0,
+                        help="messages timestamp scraping offset, has precedence over messages number offset")
+    parser.add_argument('--limit', type=int, dest='limit', default=0,
+                        help="number of messages to be retrieved")
+    #Tells the program to try to merge the new messages with the previously scraped conversation
     #avoid the need to scrape it all from the beginning
-    parser.add_argument('-m', dest='merge', action='store_true')
+    parser.add_argument('-m', dest='merge', action='store_true',
+                        help="merge the new messages with previously scraped conversation")
     parser.set_defaults(merge=False)
-    parser.add_argument('-out', metavar='outputDir', dest='outDir', default='..\\..\\Messages')
-    parser.add_argument('-conf', metavar='configFilepath', dest='configFilepath', default='..\\..\\config.ini')
+    parser.add_argument('--out', metavar='outputDir', dest='outDir', default='..\\..\\Messages')
+    parser.add_argument('--conf', metavar='configFilepath', dest='configFilepath', default='..\\..\\config.ini')
 
     args = parser.parse_args()
     convID = args.convID
     chunkSize = args.chunkSize
+    timestampOffset = args.timestampOffset
     offset = args.offset
+    limit = args.limit
     merge = args.merge
     outDir = args.outDir
     configFilepath = args.configFilepath
@@ -216,10 +214,9 @@ def main(_):
 
     cookie = config.get(DATA_SECTION, "Cookie")
     fb_dtsg = config.get(DATA_SECTION, "Fb_dtsg")
-    userID = config.get(DATA_SECTION, "UserID")
 
-    scraper = ConversationScraper(convID, offset, chunkSize, cookie, fb_dtsg, userID, outDir)
-    scraper.scrapeConversation(merge)
+    scraper = ConversationScraper(convID, cookie, fb_dtsg, outDir)
+    scraper.scrapeConversation(merge, offset, timestampOffset, chunkSize, limit)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

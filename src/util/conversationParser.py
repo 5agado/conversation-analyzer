@@ -3,7 +3,6 @@ import time
 import logging
 import sys
 import argparse
-import configparser
 
 def parseMessage(msgData, authors):
     """Parse the message contained in msgData.
@@ -63,9 +62,11 @@ def main(_):
     logger.setLevel(logging.INFO)
 
     parser = argparse.ArgumentParser(description='Conversation Parser')
-    parser.add_argument('-in', metavar='conversationPath', dest='convPath', required=True)
-    parser.add_argument('-out', metavar='outputFile', dest='out', required=True)
-    parser.add_argument('-a', metavar='authors', dest='authors', type=json.loads)
+    parser.add_argument('--in', metavar='conversationPath', dest='convPath', required=True)
+    parser.add_argument('--out', metavar='outputFile', dest='out', required=True)
+    parser.add_argument('--authors', metavar='authors', dest='authors', type=json.loads,
+                        help=""" dict to provide a correspondece between the profile IDs
+                                and eventually preferred aliases""")
 
     args = parser.parse_args()
     convPath = args.convPath

@@ -33,7 +33,7 @@ def init(_):
     parser = argparse.ArgumentParser(description='Conversation Analyzer')
     parser.add_argument('-p', metavar='conversationfilePath', dest='filepath', required=True)
     parser.add_argument('-n', metavar='numberOfMessages', type=int,
-                        dest='numMsgs', default=1000)
+                        dest='numMsgs', default=0)
     parser.add_argument('-l', metavar='wordsCountLimit', type=int,
                         dest='wCountLimit', default=20)
 
@@ -43,15 +43,20 @@ def init(_):
     wCountLimit = args.wCountLimit
 
     initLogger()
-    conv = Conversation(mio.getResourcesPath() + "\\unittest\\test_nltk_conv.txt")
-    #conv = Conversation(filepath)
-    conv.loadMessages(numMsgs)
-    rawText = conv.getEntireConvText()
-    mio.displayDispersionPlot(conv, ['sender1', ':D', 'well'])
-    mio.showConcordance(conv, "phone")
+    #conv = Conversation(mio.getResourcesPath() + "\\unittest\\test_nltk_conv.txt")
+    conv = Conversation(filepath)
+    #conv.loadMessages(numMsgs)
+    #mio.printAgglomeratedStatsToFile(lambda m: m.getHour(), 'Hours', conv)
+    #mio.printAgglomeratedStatsToFile(lambda m: m.date, 'Day', conv)
+    #mio.printAgglomeratedStatsToFile(lambda m: m.getMonth(), 'Month', conv)
+    #mplot.plotDaysWithoutMessages(conv)
+    #mplot.plotBasicLengthStats(conv)
+    #rawText = conv.getEntireConvText()
+    #mio.displayDispersionPlot(conv, ['sender1', ':D', 'well'])
+    #mio.showConcordance(conv, "phone")
     #tokens = nltk.word_tokenize(rawText)
     #words = [w.lower() for w in tokens]
-    mio.printAllLexicalStats(conv)
+    #mio.printAllLexicalStats(conv)
 
 def drawParse(conv):
     rawText = conv.getEntireConvText()

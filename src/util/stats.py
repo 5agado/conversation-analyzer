@@ -6,9 +6,9 @@ import pandas as pd
 import re
 import nltk
 import logging
-import src.util.io as mio
+import util.io as mio
 import math
-from src.model.message import Message
+from model.message import Message
 
 def getCentralTendencyValuesFor(measures):
     mean = measures.mean()
@@ -50,15 +50,14 @@ def getEmoticonsStats(messages):
     numEmoticons = 0
     if len(messages) == 0:
         return numEmoticons
+    emoticons = mio.getSetFromFile(mio.getResourcesPath() + "\emoticonList.txt")
     for m in messages:
-        mEmoticons = getEmoticonsFromMessage(m)
+        mEmoticons = getEmoticonsFromText(m.text, emoticons)
         numEmoticons += len(mEmoticons)
     return numEmoticons
 
-#TODO make it for all messages one time. Include in previous one, collect all text
-def getEmoticonsFromMessage(message):
-    emoticons = mio.getSetFromFile(mio.getResourcesPath() + "\emoticonList.txt")
-    words = map(lambda w: cleanWord(str.lower(w), emoticons), message.text.split())
+def getEmoticonsFromText(text, emoticons):
+    words = map(lambda w: cleanWord(str.lower(w), emoticons), text.split())
     msgEmoticons = list(filter(lambda w: w in emoticons, words))
     return msgEmoticons
 
@@ -85,15 +84,12 @@ def getDaysWithoutMessages(messages):
 #TODO still specific for just two senders
 def getDelayStatsFor(messages):
     """Calculates the delays between the messages of the conversation.
-    overallDelay consider all separated messages
     senderDelay consider the time that passed between a sender message and the successive reply
      from another sender. The result value is the sum of such time for each message.
      Notice that if the same sender sends many message, only the last one (before another sender message)
      is taken into consideration"""
 
     senderDelay = collections.defaultdict(timedelta)
-    #senderDelay = {conv.sender1+ ':' +conv.sender2: timedelta(0), conv.sender2+ ':' +conv.sender1: timedelta(0)}
-    overallDelay = timedelta(0)
     prevSender = messages[0].sender
     prevDatetime = datetime.strptime(messages[0].datetime, Message.DATE_TIME_FORMAT)
     for m in messages[1:]:
@@ -103,10 +99,9 @@ def getDelayStatsFor(messages):
         if prevSender != currentSender:
             senderDelay[prevSender+ ':' +currentSender] += thisDelay
             prevSender = currentSender
-        overallDelay += thisDelay
         prevDatetime = currentDatetime
 
-    return overallDelay, senderDelay
+    return senderDelay
 
 def getDelayStatsByLength(messages):
     delay = ([])
@@ -167,9 +162,6 @@ def cleanWord(word, skipSet):
     else:
         cWord = re.sub('^[^a-z0-9]*|[^a-z0-9]*$', '', word)
         #TODO better check for different possible words
-        # if cWord == 'd':
-        #     with open(mio.getResourcesPath() + '\ete.txt', "a+", encoding="utf8") as f:
-        #         f.write(word + "\n")
         return cWord
 
 def getWordsCountStats(messages, limit = 0):

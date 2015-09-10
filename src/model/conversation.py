@@ -1,7 +1,7 @@
-import src.util.io as mio
+import util.io as mio
 import numpy as np
 import pandas as pd
-import src.util.stats as mstats
+import util.stats as mstats
 import os
 import nltk
 
@@ -56,8 +56,8 @@ class Conversation:
         return days
 
     def getDelayStats(self):
-        overallDelay, delay = mstats.getDelayStatsFor(self.messages)
-        return overallDelay, delay
+        delay = mstats.getDelayStatsFor(self.messages)
+        return delay
 
     def getDelayStatsByLength(self):
         delay, senderDelay = mstats.getDelayStatsByLength(self.messages)
@@ -127,13 +127,13 @@ class Conversation:
         agglomeratedMessages = mstats.getMessagesBy(mFun, self.messages)
         df = self.generateDataFrameAgglomeratedStatsBy(mFun, agglomeratedMessages)
 
-        eStats1 = [mstats.getEmoticonsStats(list(filter(lambda m: m.sender == self.sender1, a)))
+        emoticonStatsS1 = [mstats.getEmoticonsStats(list(filter(lambda m: m.sender == self.sender1, a)))
                                  for _, a in agglomeratedMessages.items()]
-        eStats2 = [mstats.getEmoticonsStats(list(filter(lambda m: m.sender == self.sender2, a)))
+        emoticonStatsS2 = [mstats.getEmoticonsStats(list(filter(lambda m: m.sender == self.sender2, a)))
                                  for _, a in agglomeratedMessages.items()]
 
-        emoticonStatsS1 = [y for (x, y) in eStats1]
-        emoticonStatsS2 = [y for (x, y) in eStats2]
+        #emoticonStatsS1 = [y for (x, y) in eStats1]
+        #emoticonStatsS2 = [y for (x, y) in eStats2]
 
         totEmoStats = list(sum(t) for t in zip(emoticonStatsS1, emoticonStatsS2))
         s1Ratio = [n/l if l != 0 else 0 for (n, l) in zip(emoticonStatsS1, df.ix[:, 2])]
@@ -149,9 +149,9 @@ class Conversation:
         return df
 
     def getWordsCountStats(self, limit=0):
-        wCount = mstats.getWordsCount(self.messages, limit)
-        wCountS1 = mstats.getWordsCount(self.sender1Messages, limit)
-        wCountS2 = mstats.getWordsCount(self.sender2Messages, limit)
+        wCount = mstats.getWordsCountStats(self.messages, limit)
+        wCountS1 = mstats.getWordsCountStats(self.sender1Messages, limit)
+        wCountS2 = mstats.getWordsCountStats(self.sender2Messages, limit)
 
         return wCount, wCountS1, wCountS2
 
