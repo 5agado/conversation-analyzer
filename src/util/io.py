@@ -1,19 +1,29 @@
 from model.message import Message
 import logging
+from datetime import datetime
 import os
 import pandas as pd
 from pandas import read_csv
 import numpy as np
 from collections import OrderedDict
 
-def parseMessagesFromFile(filePath, limit = 0):
+def parseMessagesFromFile(filePath, limit=0, startDate=None, endDate=None):
     messages = []
     senders = set([])
+    if startDate:
+        startDate = datetime.strptime(startDate, Message.DATE_FORMAT)
+    if endDate:
+        endDate = datetime.strptime(endDate, Message.DATE_FORMAT)
     try:
         with open(filePath, 'r', encoding="utf8") as f:
             for line in f:
                 date, time, sender, text = line.split(' ', 3)
-                messages.append(Message(date, time, sender, text.strip()))
+                if startDate or endDate:
+                    thisDate = datetime.strptime(date, Message.DATE_FORMAT)
+                    if (not startDate or thisDate>=startDate) and (not endDate or thisDate<=endDate):
+                        messages.append(Message(date, time, sender, text.strip()))
+                else:
+                    messages.append(Message(date, time, sender, text.strip()))
                 senders.add(sender)
                 if limit != 0 and len(messages) >= limit:
                     break

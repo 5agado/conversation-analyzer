@@ -1,16 +1,19 @@
 #from model.conversation import Conversation
 from datetime import datetime, timedelta
 import collections
-from src.util import io as mio
+import re
+from util import io as mio
 import argparse
-from src.util import stats as mstats
+import queue as Q
+from util import stats as mstats
 from datetime import datetime
-from src.model.message import Message
-from src.util import plotting as mplot
+from model.message import Message
+from util import plotting as mplot
 import sys
 import pandas as pd
 import configparser
-from src.model.conversation import Conversation
+from model.conversation import Conversation
+import util.nlp as mnlp
 import logging
 from matplotlib import pyplot as plt
 import os
@@ -33,7 +36,7 @@ def init(_):
     parser = argparse.ArgumentParser(description='Conversation Analyzer')
     parser.add_argument('-p', metavar='conversationfilePath', dest='filepath', required=True)
     parser.add_argument('-n', metavar='numberOfMessages', type=int,
-                        dest='numMsgs', default=0)
+                        dest='numMsgs', default=1000)
     parser.add_argument('-l', metavar='wordsCountLimit', type=int,
                         dest='wCountLimit', default=20)
 
@@ -45,7 +48,41 @@ def init(_):
     initLogger()
     #conv = Conversation(mio.getResourcesPath() + "\\unittest\\test_nltk_conv.txt")
     conv = Conversation(filepath)
-    #conv.loadMessages(numMsgs)
+    #conv.loadMessages(numMsgs, "2014.09.26", "2014.09.30")
+    conv.loadMessages(numMsgs)
+
+    q = Q.PriorityQueue()
+    wCount, wCountS1, wCountS2 = conv.getWordsCountStats()
+    wCountS1 = dict(wCountS1)
+    wCountS2 = dict(wCountS2)
+    maxRatio = 0
+    word = None
+    for k, count1 in wCountS1.items():
+        if k in wCountS2:
+            ratio = count1/wCountS2[k]
+            #q.put((, word))
+            if ratio>maxRatio:
+                maxRatio = ratio
+                word = k
+            if ratio>5:
+                print(k)
+    print("For sender " + conv.sender1)
+    while not q.empty():
+        print (q.get())
+    print(word)
+    print(wCountS1[word])
+    print(wCountS2[word])
+    print(maxRatio)
+    #mio.printIntervalStatsFor(conv)
+    #mnlp.senderClassification(conv)
+
+    #sentences = emoticons.split(conv.getEntireConvText())
+    #print(sentences)
+
+    #sentences = mnlp.sentenceSegmentation(conv.getEntireConvText())
+    #sentences = mnlp.wordTokenization(conv.getEntireConvText())
+    #for s in sentences:
+    #    print(s)
     #mio.printAgglomeratedStatsToFile(lambda m: m.getHour(), 'Hours', conv)
     #mio.printAgglomeratedStatsToFile(lambda m: m.date, 'Day', conv)
     #mio.printAgglomeratedStatsToFile(lambda m: m.getMonth(), 'Month', conv)
@@ -57,38 +94,6 @@ def init(_):
     #tokens = nltk.word_tokenize(rawText)
     #words = [w.lower() for w in tokens]
     #mio.printAllLexicalStats(conv)
-
-def drawParse(conv):
-    rawText = conv.getEntireConvText()
-    #tokens = nltk.word_tokenize(rawText)
-    #words = [w.lower() for w in tokens]
-    words = mstats.getWords(conv.messages)
-    sentences = nltk.sent_tokenize(rawText)
-    sentences = [nltk.word_tokenize(sent) for sent in sentences]
-    sentences = [nltk.pos_tag(sent) for sent in sentences]
-    #text.generate()
-    #for m in conv.messages:
-    #    print(nltk.sent_tokenize(m.text))
-
-    from nltk.corpus import conll2000
-    test_sents = conll2000.chunked_sents('test.txt', chunk_types=['NP'])
-    train_sents = conll2000.chunked_sents('train.txt', chunk_types =['NP'])
-    chunker = ChunkParser(train_sents)
-
-    for s in sentences:
-        chunker.parse(s).draw()
-
-class ChunkParser(nltk.ChunkParserI):
-    def __init__(self, train_sents):
-        train_data = [[(t,c) for w,t,c in nltk.chunk.tree2conlltags(sent)] for sent in train_sents]
-        self.tagger = nltk.TrigramTagger(train_data)
-
-    def parse(self, sentence):
-        pos_tags= [pos for (word,pos) in sentence]
-        tagged_pos_tags = self.tagger.tag(pos_tags)
-        chunktags = [chunktag for (pos,chunktag) in tagged_pos_tags]
-        conlltags = [(word,pos,chunktag) for ((word,pos), chunktag) in zip(sentence,chunktags)]
-        return nltk.chunk.conlltags2tree(conlltags)
 
 def plotDelayByLengthStats(conv):
     delay, senderDelay = mstats.getDelayStatsByLength(conv)

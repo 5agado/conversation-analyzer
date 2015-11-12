@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from datetime import datetime, timedelta
 import collections
 import statistics
@@ -6,6 +8,7 @@ import pandas as pd
 import re
 import nltk
 import logging
+import sys
 import util.io as mio
 import math
 from model.message import Message
@@ -50,16 +53,42 @@ def getEmoticonsStats(messages):
     numEmoticons = 0
     if len(messages) == 0:
         return numEmoticons
-    emoticons = mio.getSetFromFile(mio.getResourcesPath() + "\emoticonList.txt")
+    #emoticons = mio.getSetFromFile(mio.getResourcesPath() + "\emoticonList.txt")
     for m in messages:
-        mEmoticons = getEmoticonsFromText(m.text, emoticons)
+        mEmoticons = getEmoticonsFromText(m.text)
         numEmoticons += len(mEmoticons)
     return numEmoticons
 
-def getEmoticonsFromText(text, emoticons):
-    words = map(lambda w: cleanWord(str.lower(w), emoticons), text.split())
-    msgEmoticons = list(filter(lambda w: w in emoticons, words))
+def getEmoticonsFromText(text):
+    emoticons = re.compile("""(^|(?<=\s))(
+        #Western
+        [<>\}30o]?
+        [:;=8bx]                     # eyes
+        [\-o\*\']?                 # optional nose
+        [\)\]\(\[dopi3/\}\*\{@\|\\\]+ #mouth
+        |
+        [\)\]\(\[dopi3/\}\*\{@\|\\\]+ #mouth
+        [\-o\*\']?                 # optional nose
+        [:;=8bx]                     # eyes
+        [<>]?
+        |
+        #Eastern
+        [><\-ùu\+\*èçòû\^\?] #eye
+        [\-_\.]* #nose
+        [><\-ùu\+\*èçòû\^\?]#eye
+        [\']?
+        |
+        <3
+        |
+        \\o/
+    )(?=\s|\W|$)""", re.IGNORECASE|re.VERBOSE)
+    msgEmoticons = [(text[a.start(): a.end()]) for a in list(emoticons.finditer(text))]
     return msgEmoticons
+
+# def getEmoticonsFromText(text, emoticons):
+#     words = map(lambda w: cleanWord(str.lower(w), emoticons), text.split())
+#     msgEmoticons = list(filter(lambda w: w in emoticons, words))
+#     return msgEmoticons
 
 def getIntervalStatsFor(messages):
     start = datetime.strptime(messages[0].datetime, Message.DATE_TIME_FORMAT)
@@ -81,13 +110,12 @@ def getDaysWithoutMessages(messages):
             days.append(d.date())
     return days
 
-#TODO still specific for just two senders
 def getDelayStatsFor(messages):
     """Calculates the delays between the messages of the conversation.
     senderDelay consider the time that passed between a sender message and the successive reply
-     from another sender. The result value is the sum of such time for each message.
-     Notice that if the same sender sends many message, only the last one (before another sender message)
-     is taken into consideration"""
+    from another sender. The result value is the sum of such time for each message.
+    Notice that if the same sender sends many message, only the last one (before another sender message)
+    is taken into consideration"""
 
     senderDelay = collections.defaultdict(timedelta)
     prevSender = messages[0].sender
@@ -106,7 +134,6 @@ def getDelayStatsFor(messages):
 def getDelayStatsByLength(messages):
     delay = ([])
     senderDelay = collections.defaultdict(list)
-    #senderDelay = {conv.sender1+ ':' +conv.sender2: [], conv.sender2+ ':' +conv.sender1: []}
     prevSender = messages[0].sender
     prevDatetime = datetime.strptime(messages[0].datetime, Message.DATE_TIME_FORMAT)
     #TODO Consider the option to sum all messages length until reply
@@ -127,7 +154,6 @@ def getDelayStatsByLength(messages):
 def getSequentialMessagesStats(messages):
     numOfSeqMsgs = collections.defaultdict(int)
     senderDelay = collections.defaultdict(timedelta)
-    #senderDelay = {conv.sender1: timedelta(0), conv.sender2: timedelta(0)}
     prevSender = messages[0].sender
     prevDatetime = datetime.strptime(messages[0].datetime, Message.DATE_TIME_FORMAT)
     for m in messages[1:]:
@@ -148,11 +174,10 @@ def getWordsCount(messages):
     return wordsCount
 
 def getWords(messages):
-    #TODO consider using regex for emoticon structure; e.g. :DDD, xDDD
-    emoticons = mio.getSetFromFile(mio.getResourcesPath() + "\emoticonList.txt")
     words = []
     for m in messages:
         mText = m.text.lower()
+        emoticons = getEmoticonsFromText(mText)
         words += list(filter(lambda w: len(w) > 0, [cleanWord(w, emoticons) for w in mText.split()]))
     return words
 
@@ -161,14 +186,13 @@ def cleanWord(word, skipSet):
         return word
     else:
         cWord = re.sub('^[^a-z0-9]*|[^a-z0-9]*$', '', word)
-        #TODO better check for different possible words
         return cWord
 
 def getWordsCountStats(messages, limit = 0):
     wCount = getWordsCount(messages)
 
     if limit == 0:
-        return wCount
+        return wCount.most_common()
     else:
         return wCount.most_common(limit)
 

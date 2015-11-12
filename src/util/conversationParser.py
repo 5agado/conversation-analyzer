@@ -7,7 +7,7 @@ import argparse
 def parseMessage(msgData, authors):
     """Parse the message contained in msgData.
 
-     Authors should be a dict to provide a correspondece between the IDs as present in the msgData
+     Authors should be a dict to provide a correspondence between the IDs as present in the msgData
      and eventually preferred aliases. If a key is not present, the ID itself is used as alias for all
      successive messages.
 
@@ -20,7 +20,7 @@ def parseMessage(msgData, authors):
         body = msgData["body"].replace("\n", " ")
         authorId = msgData["author"].split(":")[1]
         if authorId not in authors:
-            logging.warning("Missing value for author ID {}. Using direcly the ID for all successive messages")
+            logging.warning("Missing value for author ID {}. Using directly the ID for all successive messages")
             authors[authorId] = str(authorId)
         author = authors[authorId]
         message = str(dateAndTime) + " " + author + " " + body
@@ -36,7 +36,7 @@ def parseConversation(convPath, out, authors):
     Current message format result example:
     2012.06.17 15:27:42 SENDER_1 Message text from sender1
 
-    Authors should be a dict to provide a correspondece between the IDs as present in the msgData
+    Authors should be a dict to provide a correspondence between the IDs as present in the msgData
     and eventually preferred aliases. If a key is not present, the ID itself is used as alias for all
     successive messages.
     """
@@ -44,7 +44,9 @@ def parseConversation(convPath, out, authors):
         actions = json.load(data_file)
 
     f = open(out, "w", encoding='utf-8')
-    #TODO consider different type of messages, like when a call or emoticon
+    #TODO consider different type of messages, like when a call or Stickers
+    #Stickes leaves and empty message given that there is no textual content
+    #log:phone-call, log:video-call
     messages = []
     for action in actions:
         if "log_message_type" in action:
@@ -53,9 +55,9 @@ def parseConversation(convPath, out, authors):
         msg = parseMessage(action, authors)
         if msg:
             messages.append(msg)
-
-    for message in messages:
-        f.write(message + "\n")
+    #FIXME happened that number of lines exceeds previously reported number of messages retrieved
+    for msg in messages:
+        f.write(msg + "\n")
 
 def main(_):
     logger = logging.getLogger()
@@ -65,7 +67,7 @@ def main(_):
     parser.add_argument('--in', metavar='conversationPath', dest='convPath', required=True)
     parser.add_argument('--out', metavar='outputFile', dest='out', required=True)
     parser.add_argument('--authors', metavar='authors', dest='authors', type=json.loads,
-                        help=""" dict to provide a correspondece between the profile IDs
+                        help=""" dict to provide a correspondence between the profile IDs
                                 and eventually preferred aliases""")
 
     args = parser.parse_args()

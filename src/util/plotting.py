@@ -109,6 +109,8 @@ def plotStatsLines(description, labels, x, xLabels, y1, y2):
     if type(y2) != type(None):
         plt.plot(x,y2, c='b', label=labels[2], linewidth=2)
 
+
+    plt.yscale('log')
     plt.xticks(np.arange(len(xLabels)), xLabels)
     plt.legend()
     plt.gcf().autofmt_xdate()

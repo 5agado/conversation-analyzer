@@ -1,9 +1,12 @@
 import util.io as mio
 import numpy as np
+import logging
 import pandas as pd
+import time
 import util.stats as mstats
 import os
 import nltk
+import sys
 
 class Conversation:
     def __init__(self, filepath):
@@ -18,15 +21,21 @@ class Conversation:
         self.sender2Messages = None
         self.messagesBySender = {self.sender1:self.sender1Messages, self.sender2:self.sender2Messages}
 
-    #TODO add option for limit messages by date
-    #TODO check presence of at least one message
-    def loadMessages(self, limit=0):
-        #TODO generalize for N senders
-        self.messages, [self.sender1, self.sender2] = mio.parseMessagesFromFile(self.filepath, limit)
+    def loadMessages(self, limit=0, startDate=None, endDate=None):
+        logging.info("Start loading messages for conversation " + self.filepath)
+        start = time.time()
+
+        self.messages, [self.sender1, self.sender2] = \
+            mio.parseMessagesFromFile(self.filepath, limit, startDate, endDate)
+        if len(self.messages) == 0:
+            raise Exception("No messages found for conversation " + self.filepath)
         self.sender1Messages = list(filter(lambda m: m.sender == self.sender1, self.messages))
         self.sender2Messages = list(filter(lambda m: m.sender == self.sender2, self.messages))
         self.messagesBySender[self.sender1] = self.sender1Messages
         self.messagesBySender[self.sender2] = self.sender2Messages
+
+        end = time.time()
+        logging.info("Loading completed in {0:.2f}s".format(end-start))
 
     def getAsNLTKText(self, sender=None):
         if sender:
@@ -77,7 +86,6 @@ class Conversation:
             tokensCount, vocabularyCount, lexicalRichness = mstats.getLexicalStats(self.messagesBySender[sender])
         return tokensCount, vocabularyCount, lexicalRichness
 
-    #TODO Use index label instead of number
     def generateDataFrameAgglomeratedStatsBy(self, mFun, agglomeratedMessages=None):
         if not agglomeratedMessages:
             agglomeratedMessages = mstats.getMessagesBy(mFun, self.messages)
@@ -85,22 +93,19 @@ class Conversation:
                                  for _, a in agglomeratedMessages.items()]
         aggBasicLengthStatsS2 = [mstats.getBasicLengthStats(list(filter(lambda m: m.sender == self.sender2, a)))
                                  for _, a in agglomeratedMessages.items()]
-        s1y1 = [i[0] for i in aggBasicLengthStatsS1]
-        s1y2 = [i[1] for i in aggBasicLengthStatsS1]
-        s1y3 = [i[2] for i in aggBasicLengthStatsS1]
-        s2y1 = [i[0] for i in aggBasicLengthStatsS2]
-        s2y2 = [i[1] for i in aggBasicLengthStatsS2]
-        s2y3 = [i[2] for i in aggBasicLengthStatsS2]
-        toty1 = list(sum(t) for t in zip(s1y1, s2y1))
-        toty2 = list(sum(t) for t in zip(s1y2, s2y2))
-        toty3 = [l/n if n != 0 else 0 for (n, l) in zip(toty1, toty2)]
 
-        data = np.array([s1y1, s2y1, s1y2, s2y2, s1y3, s2y3, toty1, toty2, toty3]).T
-        c = [self.sender1 + '_numMsgs', self.sender2 + '_numMsgs',
-             self.sender1 + '_lenMsgs', self.sender2 + '_lenMsgs',
-             self.sender1 + '_avgLen', self.sender2 + '_avgLen',
-             'totNumMsgs', 'totLenMsgs', 'totAvgLen']
-        df = pd.DataFrame(data, index=list(agglomeratedMessages.keys()), columns=c)
+        df = pd.DataFrame(index=list(agglomeratedMessages.keys()))
+
+        df[self.sender1 + '_numMsgs'] = [i[0] for i in aggBasicLengthStatsS1]
+        df[self.sender2 + '_numMsgs'] = [i[0] for i in aggBasicLengthStatsS2]
+        df[self.sender1 + '_lenMsgs'] = [i[1] for i in aggBasicLengthStatsS1]
+        df[self.sender2 + '_lenMsgs'] = [i[1] for i in aggBasicLengthStatsS2]
+        df[self.sender1 + '_avgLen'] = [i[2] for i in aggBasicLengthStatsS1]
+        df[self.sender2 + '_avgLen'] = [i[2] for i in aggBasicLengthStatsS2]
+        df['totNumMsgs'] = df[self.sender1 + '_numMsgs'] + df[self.sender2 + '_numMsgs']
+        df['totLenMsgs'] = df[self.sender1 + '_lenMsgs'] + df[self.sender2 + '_lenMsgs']
+        df['totAvgLen'] = df['totLenMsgs'].astype("float64") /  df['totNumMsgs'].astype("float64")
+
         return df
 
     def generateDataFrameSingleWordCountBy(self, mFun, word):
@@ -115,12 +120,9 @@ class Conversation:
         s1Count = [count[word] if word in count else (by, 0) for (by, count) in wOcc1]
         s2Count = [count[word] if word in count else (by, 0) for (by, count) in wOcc2]
 
-        totCount = [c1+c2 for (c1,c2) in zip(s1Count, s2Count)]
-
-        #TODO ??already add ratio
         df[self.sender1 + '_count'] = np.array(s1Count)
         df[self.sender2 + '_count'] = np.array(s2Count)
-        df['totnumEmoticons'] = np.array(totCount)
+        df['totCount'] = df[self.sender1 + '_count'] + df[self.sender2 + '_count']
         return df
 
     def generateDataFrameEmoticoStatsBy(self, mFun):
@@ -132,20 +134,12 @@ class Conversation:
         emoticonStatsS2 = [mstats.getEmoticonsStats(list(filter(lambda m: m.sender == self.sender2, a)))
                                  for _, a in agglomeratedMessages.items()]
 
-        #emoticonStatsS1 = [y for (x, y) in eStats1]
-        #emoticonStatsS2 = [y for (x, y) in eStats2]
-
-        totEmoStats = list(sum(t) for t in zip(emoticonStatsS1, emoticonStatsS2))
-        s1Ratio = [n/l if l != 0 else 0 for (n, l) in zip(emoticonStatsS1, df.ix[:, 2])]
-        s2Ratio = [n/l if l != 0 else 0 for (n, l) in zip(emoticonStatsS2, df.ix[:, 3])]
-        totRatio = [n/l if l != 0 else 0 for (n, l) in zip(totEmoStats, df.ix[:, 7])]
-
         df[self.sender1 + '_numEmoticons'] = np.array(emoticonStatsS1)
         df[self.sender2 + '_numEmoticons'] = np.array(emoticonStatsS2)
-        df['totnumEmoticons'] = np.array(totEmoStats)
-        df[self.sender1 + '_emoticonsRatio'] = np.array(s1Ratio)
-        df[self.sender2 + '_emoticonsRatio'] = np.array(s2Ratio)
-        df['totEmoticonsRatio'] = np.array(totRatio)
+        df['totNumEmoticons'] = df[self.sender1 + '_numEmoticons'] + df[self.sender2 + '_numEmoticons']
+        df[self.sender1 + '_emoticonsRatio'] = df[self.sender1 + '_numEmoticons'] /  df[self.sender1 + '_lenMsgs']
+        df[self.sender2 + '_emoticonsRatio'] = df[self.sender2 + '_numEmoticons'] /  df[self.sender2 + '_lenMsgs']
+        df['totEmoticonsRatio'] = df['totNumEmoticons'] /  df['totLenMsgs']
         return df
 
     def getWordsCountStats(self, limit=0):

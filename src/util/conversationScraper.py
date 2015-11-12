@@ -9,8 +9,6 @@ import argparse
 import configparser
 import logging
 
-#TODO find way to merge messages if already present
-#in order to avoid to scrape all the conversation every time
 class ConversationScraper:
     """Scraper that retrieves, manipulates and stores all messages belonging to a specific Faceboo conversation"""
 
@@ -113,18 +111,20 @@ class ConversationScraper:
         If merge is specified, then new messages are merged with the previously already scraped conversation
         """
 
-        if not os.path.exists(self._directory):
-            if merge:
+        if merge:
+            if not os.path.exists(self._directory + "conversation.json"):
                 logging.error("Conversation not present. Merge operation not possible")
                 return
+            with open(self._directory + "conversation.json") as conv:
+                convMessages = json.load(conv)
+                numMergedMsgs = 0
+
+        if not os.path.exists(self._directory):
             os.makedirs(self._directory)
 
         logging.info("Starting scraping of conversation {}".format(self._convID))
 
         messages = []
-        if merge:
-            with open(self._directory + "conversation.json") as conv:
-                convMessages = json.load(conv)
         msgsData = ""
         timestamp = "" if timestampOffset == 0 else str(timestampOffset)
         while self.CONVERSATION_ENDMARK not in msgsData:
@@ -143,6 +143,7 @@ class ConversationScraper:
                 if merge and convMessages[-1]["timestamp"] > actions[0]["timestamp"]:
                     for i, action in enumerate(actions):
                         if convMessages[-1]["timestamp"] == actions[i]["timestamp"]:
+                            numMergedMsgs = len(actions[i+1:-1]) + len(messages)
                             messages = convMessages + actions[i+1:-1] + messages
                             break
                     break
@@ -170,7 +171,11 @@ class ConversationScraper:
 
             time.sleep(self.REQUEST_WAIT)
 
-        logging.info("Conversation scraped successfully. {} messages retrieved".format(len(messages)))
+        if merge:
+            logging.info("Successfully merged {} new messages".format(numMergedMsgs))
+            logging.info("Conversation total message count = {}".format(len(messages)))
+        else:
+            logging.info("Conversation scraped successfully. {} messages retrieved".format(len(messages)))
 
         self.writeMessages(messages)
 

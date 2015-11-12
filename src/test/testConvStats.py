@@ -1,5 +1,5 @@
 import unittest
-from src.model.conversation import Conversation
+from model.conversation import Conversation
 import util.io as mio
 
 class BasicStatsTestCase(unittest.TestCase):
@@ -29,9 +29,9 @@ class BasicStatsTestCase(unittest.TestCase):
     def test_emoticonStats(self):
         conv = self.getConversation(mio.getResourcesPath() + "\\unittest\\test_emoticons_conv.txt")
         numEmoticons, numEmoticonsS1, numEmoticonsS2 = conv.getEmoticonsStats()
-        sender = {'S1': 3, 'S2': 2}
+        sender = {'S1': 3, 'S2': 3}
 
-        self.assertEqual(numEmoticons, 5)
+        self.assertEqual(numEmoticons, 6)
         self.assertEqual(numEmoticonsS1, sender[conv.sender1])
         self.assertEqual(numEmoticonsS2, sender[conv.sender2])
 
