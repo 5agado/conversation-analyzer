@@ -67,6 +67,7 @@ def main(_):
     parser.add_argument('--in', metavar='conversationPath', dest='convPath', required=True)
     parser.add_argument('--out', metavar='outputFile', dest='out', required=True)
     parser.add_argument('--authors', metavar='authors', dest='authors', type=json.loads,
+                        default={},
                         help=""" dict to provide a correspondence between the profile IDs
                                 and eventually preferred aliases""")
 
