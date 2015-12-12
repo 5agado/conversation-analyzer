@@ -36,7 +36,7 @@ Once the values of *cookie* and *fb_dtsg* have been copied in the *config.ini* f
 To run the parser just provide as arguments the path of the scraped-conversation file and the desired path for the parsed output.
 Additionally you can pass via *--authors* a dictionary like structure to provide a correspondence between the profile IDs and eventually preferred aliases. This might make the parsed output more readable. Example usage:
 
-    --authors "{'11234':'SENDER_1', '112345':'SENDER_2'}"
+    --authors "{"11234":"SENDER_1", "112345":"SENDER_2"}"
 
 ##TODO
     * Generalize for group conversations (all three components)
