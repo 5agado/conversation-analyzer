@@ -1,11 +1,9 @@
-import urllib.parse
-import urllib.request
-import gzip
 import os
 import json
 import sys
 import time
 import argparse
+import requests
 import configparser
 import logging
 
@@ -50,9 +48,7 @@ class ConversationScraper:
                      "__dyn": "",
                      "__req": "",
                      "fb_dtsg": self._fb_dtsg}
-        data = urllib.parse.urlencode(dataForm)
-        data = data.encode('utf-8')
-        return data
+        return dataForm
 
     """
     POST Request all header:
@@ -90,14 +86,12 @@ class ConversationScraper:
         url = "https://www.facebook.com/ajax/mercury/thread_info.php"
 
         start = time.time()
-        req = urllib.request.Request(url, requestData, headers)
-        with urllib.request.urlopen(req) as response:
-            with gzip.GzipFile(fileobj=response) as uncompressed:
-                decompressedFile = uncompressed.read()
+        response = requests.post(url, data=requestData, headers=headers)
         end = time.time()
         logging.info("Retrieved in {0:.2f}s".format(end-start))
+
         #Remove additional leading characters
-        msgsData = decompressedFile.decode("utf-8")[9:]
+        msgsData = response.text[9:]
         return  msgsData
 
     def writeMessages(self, messages):
