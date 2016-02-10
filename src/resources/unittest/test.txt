@@ -1,0 +1,100 @@
+2014.02.05 23:20:37 s2 bad nice hello baloon hello baloon hello nice
+2014.02.05 23:28:37 s2 jojo bad nice bad bad bad bad baloon jojo jojo hello hello nice hello jojo baloon nice hello
+2014.02.10 08:08:49 s1 hello bad nice
+2014.02.11 04:33:31 s1 jojo hello bad jojo jojo nice hello jojo nice bad baloon jojo hello jojo bad hello
+2014.02.17 19:41:18 s1 jojo baloon bad nice hello bad bad
+2014.02.19 06:32:37 s1 baloon nice bad
+2014.02.21 14:43:03 s1 hello hello jojo baloon hello jojo hello baloon bad nice bad baloon hello bad nice nice baloon bad bad
+2014.02.24 10:51:41 s1 jojo baloon
+2014.02.26 07:01:52 s2 bad baloon baloon bad jojo bad hello jojo bad baloon hello
+2014.02.28 06:47:05 s1 baloon jojo baloon baloon jojo baloon bad nice hello hello bad bad
+2014.03.01 10:02:10 s1 jojo nice baloon bad baloon bad baloon nice nice baloon hello baloon baloon baloon bad
+2014.03.03 10:27:46 s2 nice jojo hello baloon bad nice
+2014.03.03 11:07:01 s2 hello hello hello baloon jojo jojo
+2014.03.05 18:56:53 s1 jojo baloon bad bad bad nice hello baloon nice bad baloon bad nice jojo nice bad hello baloon bad
+2014.03.08 18:44:03 s1 jojo baloon baloon baloon bad nice nice baloon bad nice hello nice
+2014.03.11 00:36:31 s2 baloon bad
+2014.03.13 14:50:18 s2 baloon nice nice baloon jojo bad hello nice
+2014.03.13 18:50:44 s1 jojo baloon bad baloon
+2014.03.14 04:57:21 s1 nice bad hello bad bad baloon jojo baloon jojo nice nice jojo hello baloon
+2014.03.15 03:02:41 s1 bad bad bad bad hello hello hello jojo bad hello hello nice jojo jojo
+2014.03.16 01:43:28 s2 baloon baloon jojo bad baloon hello hello nice nice nice nice baloon jojo jojo jojo nice
+2014.03.16 10:49:22 s1 bad baloon jojo bad bad baloon baloon baloon baloon bad bad jojo baloon bad
+2014.03.17 22:51:56 s1 baloon hello hello jojo nice hello hello nice
+2014.03.22 10:18:46 s2 nice nice bad jojo bad baloon bad bad nice baloon bad baloon baloon nice hello bad baloon nice baloon baloon
+2014.03.30 09:38:12 s2 hello baloon
+2014.04.03 07:23:32 s1 hello hello hello baloon baloon jojo hello hello bad jojo bad
+2014.04.18 04:44:23 s2 bad hello bad nice nice bad hello jojo baloon nice baloon bad bad baloon baloon nice
+2014.04.19 00:11:53 s2 nice baloon jojo bad bad baloon baloon nice bad jojo nice baloon bad baloon jojo baloon nice
+2014.05.05 14:00:09 s2 baloon nice baloon baloon nice bad hello nice
+2014.05.17 00:54:08 s1 hello
+2014.05.18 21:48:24 s1 nice bad baloon hello baloon bad bad hello jojo jojo nice baloon jojo baloon hello hello
+2014.05.19 06:48:43 s1 baloon jojo hello bad nice jojo baloon baloon jojo baloon hello bad
+2014.05.23 19:25:51 s1 baloon nice nice hello hello hello hello jojo bad bad hello bad hello jojo nice nice baloon bad jojo
+2014.05.25 11:53:30 s1 nice bad bad nice jojo nice bad hello nice bad baloon nice bad
+2014.05.27 09:44:46 s2 baloon jojo jojo hello nice nice bad hello nice baloon bad nice baloon
+2014.05.28 10:49:26 s2 baloon bad bad bad jojo baloon baloon hello bad nice bad hello baloon baloon baloon
+2014.05.30 11:50:12 s2 baloon hello nice nice hello bad nice nice hello baloon jojo hello hello baloon
+2014.06.01 09:59:31 s2 hello bad nice jojo bad bad jojo hello bad baloon nice baloon nice jojo baloon jojo jojo baloon bad nice
+2014.06.03 00:04:51 s2 nice jojo nice baloon hello
+2014.06.04 23:20:15 s1 nice jojo baloon
+2014.06.05 12:57:50 s1 hello hello jojo bad baloon baloon baloon bad baloon hello
+2014.06.07 05:22:31 s1 hello jojo hello
+2014.06.12 02:02:09 s1 nice jojo nice hello nice hello nice nice hello hello nice bad jojo
+2014.06.21 21:40:53 s2 jojo bad hello bad
+2014.06.25 07:03:30 s1 baloon nice jojo bad bad jojo baloon nice baloon nice jojo hello jojo hello hello jojo baloon jojo bad nice
+2014.06.30 19:12:14 s2 jojo baloon baloon bad baloon bad jojo baloon bad jojo bad baloon
+2014.07.01 03:06:37 s1 bad baloon nice bad hello bad bad jojo
+2014.07.03 08:26:07 s1 hello nice jojo jojo bad jojo nice hello hello baloon baloon hello baloon jojo nice jojo
+2014.07.05 09:50:44 s2 baloon nice baloon jojo nice bad baloon nice bad baloon nice jojo
+2014.07.07 00:47:14 s2 jojo bad baloon hello bad jojo hello jojo nice nice nice bad jojo
+2014.07.09 08:10:17 s1 nice hello bad baloon bad jojo jojo nice nice hello bad nice hello nice jojo jojo bad
+2014.07.15 22:13:09 s2 jojo hello nice jojo nice hello jojo nice baloon nice nice
+2014.07.21 17:17:23 s1 nice baloon jojo jojo nice bad baloon bad
+2014.07.25 20:58:37 s2 nice bad hello
+2014.08.03 05:25:13 s2 nice nice bad hello bad nice nice hello baloon nice baloon nice hello bad baloon nice hello nice baloon
+2014.08.04 06:50:23 s1 bad bad hello jojo bad hello bad baloon hello hello
+2014.08.13 22:29:23 s1 nice
+2014.08.16 20:05:53 s1 nice jojo jojo baloon bad nice jojo jojo baloon jojo nice jojo bad jojo jojo baloon
+2014.08.17 20:18:48 s1 nice bad nice
+2014.09.01 08:43:49 s2 baloon hello bad bad jojo baloon bad baloon bad
+2014.09.07 21:53:25 s1 bad nice nice bad nice baloon jojo baloon baloon baloon jojo baloon hello hello hello baloon jojo jojo hello
+2014.09.08 13:27:53 s1 hello hello jojo jojo baloon jojo nice jojo nice nice bad
+2014.09.15 08:56:18 s2 jojo hello hello baloon hello nice baloon bad hello bad hello nice baloon nice bad
+2014.09.16 16:16:45 s2 nice hello
+2014.09.19 11:20:41 s2 nice hello jojo bad hello nice
+2014.09.20 05:31:00 s2 bad jojo bad jojo jojo hello hello
+2014.09.29 23:26:48 s1 baloon nice jojo bad jojo baloon jojo baloon nice baloon hello jojo hello hello nice baloon
+2014.10.01 19:15:22 s1 baloon jojo baloon hello bad baloon bad hello hello bad bad jojo bad nice
+2014.10.06 16:51:21 s2 nice baloon hello jojo nice hello baloon hello nice baloon nice baloon baloon baloon nice nice jojo jojo jojo nice
+2014.10.07 03:04:21 s2 hello jojo baloon jojo nice bad nice jojo bad
+2014.10.07 22:04:35 s2 nice hello nice jojo hello baloon hello baloon hello baloon baloon
+2014.10.09 02:01:11 s1 nice nice bad hello nice bad bad bad
+2014.10.09 10:51:09 s2 jojo baloon baloon baloon bad hello bad baloon baloon hello hello baloon nice bad nice bad
+2014.10.11 16:58:59 s1 nice baloon bad bad
+2014.10.16 00:40:49 s1 baloon hello hello bad jojo nice jojo bad baloon bad nice
+2014.10.18 05:44:14 s1 jojo hello bad jojo hello bad jojo hello nice jojo hello hello bad jojo jojo
+2014.10.19 02:22:54 s2 nice
+2014.10.23 02:15:44 s2 hello hello jojo jojo hello baloon hello jojo hello nice nice nice baloon nice nice nice nice nice
+2014.10.24 13:45:19 s1 jojo nice hello hello bad nice baloon baloon nice bad hello jojo bad nice bad bad bad nice bad
+2014.10.30 11:40:39 s1 hello hello bad nice jojo hello bad hello jojo baloon bad bad bad hello bad bad
+2014.10.31 17:31:00 s1 bad baloon hello jojo bad nice nice baloon jojo baloon
+2014.11.03 07:34:56 s1 jojo hello nice baloon hello hello nice jojo bad nice nice bad bad jojo
+2014.11.07 00:02:58 s1 baloon baloon nice baloon hello jojo bad jojo hello hello
+2014.11.07 20:13:25 s1 hello bad jojo nice baloon nice nice hello
+2014.11.09 23:18:56 s2 nice nice hello jojo hello jojo hello baloon hello hello baloon bad baloon
+2014.11.10 11:28:35 s1 nice baloon bad bad bad bad hello nice
+2014.11.20 22:13:13 s2 bad baloon baloon nice jojo baloon jojo nice bad jojo bad hello baloon hello hello baloon nice bad bad
+2014.11.27 17:32:48 s2 bad baloon jojo bad nice jojo
+2014.12.11 20:42:57 s2 bad jojo nice baloon jojo bad bad jojo hello baloon hello bad bad hello jojo hello jojo hello
+2014.12.12 23:08:04 s2 bad jojo nice hello bad baloon nice hello bad bad bad nice nice baloon
+2014.12.14 02:02:11 s1 nice nice bad bad bad nice bad hello baloon baloon
+2014.12.16 10:15:48 s2 baloon nice baloon baloon baloon bad
+2014.12.16 10:53:14 s2 bad hello baloon baloon bad bad bad baloon jojo jojo nice baloon hello hello baloon nice jojo bad hello bad
+2014.12.23 09:28:23 s2 baloon nice baloon jojo nice baloon baloon baloon jojo nice hello jojo baloon bad
+2014.12.25 02:45:35 s2 hello nice nice
+2014.12.25 11:38:39 s1 jojo bad bad bad nice nice jojo hello nice nice nice jojo jojo bad jojo nice baloon hello jojo
+2014.12.25 12:13:55 s2 bad bad jojo hello bad hello nice bad nice bad hello baloon bad baloon jojo baloon
+2014.12.26 21:06:14 s2 nice bad baloon nice hello bad hello nice jojo jojo hello bad
+2015.12.28 13:26:21 s1 nice jojo jojo nice baloon nice nice nice
+2015.12.30 02:14:57 s1 nice baloon bad nice hello nice bad jojo nice bad nice

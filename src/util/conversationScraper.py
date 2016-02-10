@@ -129,29 +129,34 @@ class ConversationScraper:
             jsonData = json.loads(msgsData)
 
             if jsonData and jsonData['payload']:
-                actions = jsonData['payload']['actions']
+                if jsonData['payload']['actions']:
+                    actions = jsonData['payload']['actions']
 
-                #case when the last message already present in the conversation
-                #is older newer than the first one of the current retrieved chunk
-                #print(str(convMessages[-1]["timestamp"]) + " > " + str(actions[0]["timestamp"]))
-                if merge and convMessages[-1]["timestamp"] > actions[0]["timestamp"]:
-                    for i, action in enumerate(actions):
-                        if convMessages[-1]["timestamp"] == actions[i]["timestamp"]:
-                            numMergedMsgs = len(actions[i+1:-1]) + len(messages)
-                            messages = convMessages + actions[i+1:-1] + messages
-                            break
-                    break
+                    #case when the last message already present in the conversation
+                    #is older newer than the first one of the current retrieved chunk
+                    #print(str(convMessages[-1]["timestamp"]) + " > " + str(actions[0]["timestamp"]))
+                    if merge and convMessages[-1]["timestamp"] > actions[0]["timestamp"]:
+                        for i, action in enumerate(actions):
+                            if convMessages[-1]["timestamp"] == actions[i]["timestamp"]:
+                                numMergedMsgs = len(actions[i+1:-1]) + len(messages)
+                                messages = convMessages + actions[i+1:-1] + messages
+                                break
+                        break
 
-                #We retrieve one message two times, as the first one of the previous chunk
-                #and as the last one of the new one. So we here remove the duplicate,
-                #but only once we already retrieved at least one chunk
-                if len(messages) == 0:
-                    messages = actions
+                    #We retrieve one message two times, as the first one of the previous chunk
+                    #and as the last one of the new one. So we here remove the duplicate,
+                    #but only once we already retrieved at least one chunk
+                    if len(messages) == 0:
+                        messages = actions
+                    else:
+                        messages = actions[:-1] + messages
+
+                    #update timestamp
+                    timestamp = str(actions[0]["timestamp"])
                 else:
-                    messages = actions[:-1] + messages
-
-                #update timestamp
-                timestamp = str(actions[0]["timestamp"])
+                    logging.error("Response error. No messages found")
+                    logging.error(msgsData)
+                    break
             else:
                 logging.error("Response error. Empty data or payload")
                 logging.error(msgsData)

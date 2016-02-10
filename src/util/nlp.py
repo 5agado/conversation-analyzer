@@ -1,6 +1,5 @@
 import nltk
 from nltk.corpus import conll2000
-from util import stats as mstats
 
 def sentenceSegmentation(text):
     sentences = nltk.sent_tokenize(text)
@@ -40,7 +39,7 @@ class ChunkParser(nltk.ChunkParserI):
 
 def senderClassification(conv):
     messages = [(m.text, m.sender) for m in conv.messages]
-    wordFeature = list(mstats.getWordsCountStats(conv.messages, 200))
+    wordFeature = list(conv.stats.getWordsCountStats(conv.messages, 200))
 
     #featuresets = [(messageFeatures(m, wordFeature), c) for (m,c) in messages]
     featuresets = [(messageFeatures(m, wordFeature), c) for (m,c) in messages]

@@ -53,35 +53,35 @@ def showConcordance(conv, word):
     text.concordance(word)
 
 def printWordsCountToFile(conv, limit=0):
-    wCount, wCountS1, wCountS2 = conv.getWordsCountStats(limit)
+    wCount, wCountS1, wCountS2 = conv.stats.getWordsCountStats(limit)
 
-    printDictToFile(OrderedDict(wCount), "#Words Count", conv.statsFolder + "\\wordsCount.txt")
-    printDictToFile(OrderedDict(wCountS1), "#Words Count" + conv.sender1,
-                    conv.statsFolder + "\\wordsCount" + conv.sender1 + ".txt")
-    printDictToFile(OrderedDict(wCountS2), "#Words Count" + conv.sender2,
-                    conv.statsFolder + "\\wordsCount" + conv.sender2 + ".txt")
+    printDictToFile(OrderedDict(wCount), conv.statsFolder + "\\wordsCount.txt", "#Words Count")
+    printDictToFile(OrderedDict(wCountS1), conv.statsFolder + "\\wordsCount" + conv.sender1 + ".txt",
+                    "#Words Count" + conv.sender1)
+    printDictToFile(OrderedDict(wCountS2), conv.statsFolder + "\\wordsCount" + conv.sender2 + ".txt",
+                    "#Words Count" + conv.sender2,)
 
 def printWordsMentioningToFile(conv):
-    wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2 = conv.getWordsMentioningStats()
-    printListToFile(wordsSaidByBoth, "#Words said by both", conv.statsFolder + "\wordsSaidByBoth.txt")
-    printListToFile(wordsSaidJustByS1, "#Words said just by " + conv.sender1,
-                    conv.statsFolder + "\\wordsSaidJustBy" + conv.sender1 + ".txt")
-    printListToFile(wordsSaidJustByS2, "#Words said just by " + conv.sender2,
-                    conv.statsFolder + "\\wordsSaidJustBy" + conv.sender2 + ".txt")
+    wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2 = conv.stats.getWordsMentioningStats()
+    printListToFile(wordsSaidByBoth, conv.statsFolder + "\wordsSaidByBoth.txt", "#Words said by both")
+    printListToFile(wordsSaidJustByS1, conv.statsFolder + "\\wordsSaidJustBy" + conv.sender1 + ".txt",
+                    "#Words said just by " + conv.sender1)
+    printListToFile(wordsSaidJustByS2, conv.statsFolder + "\\wordsSaidJustBy" + conv.sender2 + ".txt",
+                    "#Words said just by " + conv.sender2)
 
 def printSingleWordCountToFile(mFun, aggType, word, conv):
     filepath = conv.statsFolder + '\\' + word + "_" + aggType + 'Stats.txt'
-    df = conv.generateDataFrameSingleWordCountBy(mFun, word)
+    df = conv.stats.generateDataFrameSingleWordCountBy(mFun, word)
     printDataFrameToFile(aggType, df, filepath)
 
 def printAgglomeratedStatsToFile(mFun, aggType, conv):
     filepath = conv.statsFolder + '\\' + aggType + 'Stats.txt'
-    df = conv.generateDataFrameAgglomeratedStatsBy(mFun)
+    df = conv.stats.generateDataFrameAgglomeratedStatsBy(mFun)
     printDataFrameToFile(aggType, df, filepath)
 
 def printEmoticonStatsToFile(mFun, aggType, conv):
     filepath = conv.statsFolder + '\\' + aggType + 'Stats.txt'
-    df = conv.generateDataFrameEmoticoStatsBy(mFun)
+    df = conv.stats.generateDataFrameEmoticonsStatsBy(mFun)
     printDataFrameToFile(aggType, df, filepath)
 
 def printDataFrameToFile(aggType, df, filepath):
@@ -90,7 +90,7 @@ def printDataFrameToFile(aggType, df, filepath):
     df.to_csv(filepath)
 
 def printBasicLengthStats(conv, sender=None):
-    totalNum, totalLength, avgLegth = conv.getBasicLengthStats(sender)
+    totalNum, totalLength, avgLegth = conv.stats.getBasicLengthStats(sender)
 
     logging.info("Total number of messages: {}".format(totalNum))
     logging.info("Total length: {}".format(totalLength))
@@ -108,9 +108,9 @@ def printAllBasicLengthStats(conv):
 
 def printBasicLengthStatsToFile(conv):
     filepath = conv.statsFolder + '\\' + 'BasicLength' + 'Stats.txt'
-    totalNum, totalLength, avgLegth = conv.getBasicLengthStats()
-    totalNumS1, totalLengthS1, avgLegthS1 = conv.getBasicLengthStats(conv.sender1)
-    totalNumS2, totalLengthS2, avgLegthS2 = conv.getBasicLengthStats(conv.sender2)
+    totalNum, totalLength, avgLegth = conv.stats.getBasicLengthStats()
+    totalNumS1, totalLengthS1, avgLegthS1 = conv.stats.getBasicLengthStats(conv.sender1)
+    totalNumS2, totalLengthS2, avgLegthS2 = conv.stats.getBasicLengthStats(conv.sender2)
     data = np.array([[totalNumS1], [totalNumS2], [totalLengthS1],
                      [totalLengthS2], [avgLegthS1], [avgLegthS2],
                      [totalNum], [totalLength], [avgLegth]]).T
@@ -122,7 +122,7 @@ def printBasicLengthStatsToFile(conv):
     printDataFrameToFile('Basic Length', df, filepath)
 
 def printLexicalStats(conv, sender=None):
-    tokensCount, vocabularyCount, lexicalRichness = conv.getLexicalStats(sender)
+    tokensCount, vocabularyCount, lexicalRichness = conv.stats.getLexicalStats(sender)
 
     logging.info("Tokens count: {}".format(tokensCount))
     logging.info("Distinct tokens count: {}".format(vocabularyCount))
@@ -139,14 +139,14 @@ def printAllLexicalStats(conv):
     logging.info('-'*10)
 
 def printIntervalStatsFor(conv):
-    start, end, interval = conv.getIntervalStats()
+    start, end, interval = conv.stats.getIntervalStats()
 
     logging.info("##Conv Interval")
     logging.info("Conversation started: {}".format(start))
     logging.info("Conversation ended: {}".format(end))
     logging.info("Conversation overall duration: {}".format(interval))
 
-    days = conv.getDaysWithoutMessages()
+    days = conv.stats.getDaysWithoutMessages()
     logging.info("{} days without messages".format(len(days)))
     percentage = (len(days)/(interval.days+1))*100
     logging.info("{0:.2f}% out of the conversation overall days-interval".format(percentage))
@@ -155,7 +155,7 @@ def printIntervalStatsFor(conv):
     logging.info('-'*10)
 
 def printDelayStatsFor(conv):
-    delay = conv.getDelayStats()
+    delay = conv.stats.getDelayStats()
     logging.info("##Reply Delay Stats")
     logging.info("Reply delay by sender: ")
     for s, d in delay.items():
@@ -165,15 +165,17 @@ def printDelayStatsFor(conv):
 
 def printDictToFile(d, title, filepath):
     with open(filepath, "w+", encoding="utf8") as f:
-        f.write(title + "\n")
+        if title:
+            f.write(title + "\n")
         for k, v in d.items():
             f.write('{} : {}\n'.format(k, v))
 
-def printListToFile(l, title, filepath):
+def printListToFile(l, filepath, title=None):
     with open(filepath, "w+", encoding="utf8") as f:
-        f.write(title + "\n")
+        if title:
+            f.write(title + "\n")
         for e in l:
-            f.write(e+"\n")
+            f.write(str(e)+"\n")
 
 def getResourcesPath():
     return os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, 'resources'))

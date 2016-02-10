@@ -2,13 +2,11 @@ import logging
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-import json
 import random
 import argparse
 import configparser
 from model.conversation import Conversation
-from bluemixClient import BluemixClient
-import util.io as mio
+from test.bluemixClient import BluemixClient
 
 #from watson_developer_cloud import LanguageTranslationV2 as LanguageTranslation
 
@@ -52,25 +50,17 @@ def init(_):
     except ValueError:
         print('Sample size exceeded population size.')
 
-    #language_translation = LanguageTranslation(username=BLUEMIX_USERNAME,
-    #                                           password=BLUEMIX_PASSWORD)
-
-    #print(json.dumps(language_translation.get_models(), indent=2))
-    #print(json.dumps(language_translation.translate('Hola', source='es', target='en'), indent=2,
-    #                 ensure_ascii=False))
-
-    client = BluemixClient(BLUEMIX_USERNAME, BLUEMIX_PASSWORD,
-                                        "https://gateway.watsonplatform.net/personality-insights/api")
-    #                                   "https://gateway.watsonplatform.net/language-translation/api")
-    #print(translate(client, "hello", "en", "es"))
-
-    #print(translate(client, text,'en', 'es'))
     with open("tmp", "w+", encoding="utf8") as f:
-        f.write(personalityInsights(client, text))
+        f.write(personalityInsights(BLUEMIX_USERNAME, BLUEMIX_PASSWORD, text))
     print(conv.sender2)
 
 
-def translate(client, text, source, target):
+def translate(username, password, text, source, target):
+    #print(translate(client, "hello", "en", "es"))
+    #print(translate(client, text,'en', 'es'))
+
+    client = BluemixClient(username, password, "https://gateway.watsonplatform.net/language-translation/api")
+
     REQUEST_URL = "https://gateway.watsonplatform.net/language-translation/api/v2/translate"
     postData={"source": source,
               "target": target,
@@ -78,7 +68,14 @@ def translate(client, text, source, target):
 
     return client.request(REQUEST_URL, postData)
 
-def personalityInsights(client, text):
+def personalityInsights(username, password, text):
+    #language_translation = LanguageTranslation(username=BLUEMIX_USERNAME, password=BLUEMIX_PASSWORD)
+    #print(json.dumps(language_translation.get_models(), indent=2))
+    #print(json.dumps(language_translation.translate('Hola', source='es', target='en'), indent=2,
+    #                 ensure_ascii=False))
+
+    client = BluemixClient(username, password, "https://gateway.watsonplatform.net/personality-insights/api")
+
     REQUEST_URL = "https://gateway.watsonplatform.net/personality-insights/api/v2/profile"
 
     return  client.request(REQUEST_URL, text)

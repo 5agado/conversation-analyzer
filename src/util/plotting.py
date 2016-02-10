@@ -4,31 +4,35 @@ import util.io as mio
 from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
+import seaborn as sns
 from model.message import Message
 
-def plotBasicLengthStats(conv):
-    totalNum, totalLength, avgLegth = conv.getBasicLengthStats()
-    totalNumS1, totalLengthS1, avgLegthS1 = conv.getBasicLengthStats(conv.sender1)
-    totalNumS2, totalLengthS2, avgLegthS2 = conv.getBasicLengthStats(conv.sender2)
+def plotBasicLengthStats(conv, anonymise=True):
+    totalNum, totalLength, avgLegth = conv.stats.getBasicLengthStats()
+    totalNumS1, totalLengthS1, avgLegthS1 = conv.stats.getBasicLengthStats(conv.sender1)
+    totalNumS2, totalLengthS2, avgLegthS2 = conv.stats.getBasicLengthStats(conv.sender2)
 
-    labels = conv.sender1, conv.sender2
-    colors = ['yellowgreen', 'lightskyblue']
+    if anonymise:
+        labels = "Donnie", "Frank"
+    else:
+        labels = conv.sender1, conv.sender2
+
+    colors = [(152/255,233/255,138/255), (197/255,176/255,213/255)]
 
     plt.figure(1)
     plt.subplot(121)
-    plt.title('Total number of messages')
+    plt.title('Number of Messages')
     sizes = [totalNumS1/totalNum, totalNumS2/totalNum]
-    plt.pie(sizes, labels=labels, colors=colors,
-            autopct='%1.1f%%', shadow=True, startangle=90)
+    plt.pie(sizes, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
     plt.axis('equal')
 
     plt.subplot(122)
-    plt.title('Total length')
+    plt.title('Messages Total Length')
     sizes = [totalLengthS1/totalLength, totalLengthS2/totalLength]
-    plt.pie(sizes, labels=labels, colors=colors,
-            autopct='%1.1f%%', shadow=True, startangle=90)
+    plt.pie(sizes, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
     plt.axis('equal')
 
+    plt.legend(labels, loc='lower right')
     plt.show()
 
 def plotDaysWithoutMessages(conv):
@@ -45,6 +49,27 @@ def plotDaysWithoutMessages(conv):
     plt.xticks(np.arange(len(datelist)), datelist)
     plt.gcf().autofmt_xdate()
     plt.show()
+
+def plotHoursStats(data):
+    ax = sns.barplot(x="hour", y="len", hue="sender", data=data)
+    ax.set_title("Hour Stats")
+    sns.plt.show()
+
+def plotMonthStats(data):
+    #ax = sns.barplot(x="month", y="len", hue="sender", data=data)
+    #ax.set_title("Month Stats"))
+    grouped = data.groupby('year')
+    count = 1
+    plt.figure(1)
+    for year, group in grouped:
+        ax = plt.subplot(1,2,count)
+        ax.set_title(year)
+        sns.barplot(x="month", y="len", hue="sender", data=group, ax=ax)
+        count += 1
+
+    #g = sns.FacetGrid(data, col="year")
+    #g.map(sns.barplot, 'month', 'len')
+    sns.plt.show()
 
 def plotHoursStatsFromFile(filepath):
     plotStatsFromFile(filepath, "Hours Stats", 3, 4, True)

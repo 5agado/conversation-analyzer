@@ -5,7 +5,7 @@ import re
 from util import io as mio
 import argparse
 import queue as Q
-from util import stats as mstats
+from util import convStats as mstats
 from datetime import datetime
 from model.message import Message
 from util import plotting as mplot
