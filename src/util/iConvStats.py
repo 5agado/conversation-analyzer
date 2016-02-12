@@ -3,15 +3,8 @@
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
 import collections
-import statistics
 import numpy as np
 import pandas as pd
-import re
-import nltk
-import logging
-import sys
-import util.io as mio
-import math
 from model.message import Message
 from util import statsUtil
 
@@ -145,18 +138,9 @@ class IConvStats(metaclass=ABCMeta):
         return numOfSeqMsgs, senderDelay
 
     @staticmethod
+    @abstractmethod
     def getWordsCount(messages):
-        wordsCount = collections.Counter(IConvStats.getWords(messages))
-        return wordsCount
-
-    @staticmethod
-    def getWords(messages):
-        words = []
-        for m in messages:
-            mText = m.text.lower()
-            emoticons = statsUtil.getEmoticonsFromText(mText)
-            words += list(filter(lambda w: len(w) > 0, [statsUtil.cleanWord(w, emoticons) for w in mText.split()]))
-        return words
+        pass
 
     def getWordsCountStats(self, limit=0):
         wCount = IConvStats._getWordsCountStats(self.conversation.messages, limit)
@@ -210,41 +194,13 @@ class IConvStats(metaclass=ABCMeta):
         groups = collections.defaultdict(list, [(i, []) for i in range(24)])
         return IConvStats._getMessagesBy(lambda m: m.getHour(), messages, groups)
 
+    @abstractmethod
     def getLexicalStats(self, sender=None):
-        if not sender:
-            tokensCount, vocabularyCount, lexicalRichness = IConvStats._getLexicalStats(self.conversation.messages)
-        else:
-            tokensCount, vocabularyCount, lexicalRichness = IConvStats._getLexicalStats(self.conversation.messagesBySender[sender])
-        return tokensCount, vocabularyCount, lexicalRichness
+        pass
 
-    @staticmethod
-    def _getLexicalStats(messages):
-        words = IConvStats.getWords(messages)
-        text = nltk.Text(words)
-        tokensCount = len(text)
-        vocabularyCount = len(set(text))
-        if tokensCount == 0:
-            lexicalRichness = 0
-        else:
-            lexicalRichness = vocabularyCount / tokensCount
-        return  tokensCount, vocabularyCount, lexicalRichness
-
+    @abstractmethod
     def generateDataFrameSingleWordCountBy(self, mFun, word):
-        agglomeratedMessages = IConvStats._getMessagesBy(mFun, self.conversation.messages)
-        df = self.generateDataFrameAgglomeratedStatsBy(mFun, agglomeratedMessages)
-
-        wOcc1 = [(d, IConvStats.getWordsCount(list(filter(lambda m: m.sender == self.conversation.sender1, a))))
-                             for d, a in agglomeratedMessages.items()]
-        wOcc2 = [(d, IConvStats.getWordsCount(list(filter(lambda m: m.sender == self.conversation.sender2, a))))
-                             for d, a in agglomeratedMessages.items()]
-
-        s1Count = [count[word] if word in count else (by, 0) for (by, count) in wOcc1]
-        s2Count = [count[word] if word in count else (by, 0) for (by, count) in wOcc2]
-
-        df[self.conversation.sender1 + '_count'] = np.array(s1Count)
-        df[self.conversation.sender2 + '_count'] = np.array(s2Count)
-        df['totCount'] = df[self.conversation.sender1 + '_count'] + df[self.conversation.sender2 + '_count']
-        return df
+        pass
 
     def generateDataFrameEmoticonsStatsBy(self, mFun):
         agglomeratedMessages = IConvStats._getMessagesBy(mFun, self.conversation.messages)

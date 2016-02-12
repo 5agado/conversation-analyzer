@@ -1,5 +1,7 @@
 from util.iConvStats import IConvStats
 import pandas as pd
+import collections
+from util import statsUtil
 
 class ConvStatsDataFrame(IConvStats):
     def __init__(self, conversation):
@@ -13,6 +15,19 @@ class ConvStatsDataFrame(IConvStats):
                           columns=['date', 'time', 'sender', 'text'])
         return df
 
+    def getMessagesTotalLength(self):
+        msgsLen = self.df['text'].apply(lambda x: len(x))
+        totalLength = msgsLen.sum()
+        return totalLength
+
+    def getBasicLengthStats(self, sender=None):
+        basicLengthStatsDf = self._getBasicLengthStats()
+        if not sender:
+            totalNum, totalLength, avgLegth = basicLengthStatsDf.loc['total'].tolist()
+        else:
+            totalNum, totalLength, avgLegth = basicLengthStatsDf.loc[sender].tolist()
+        return totalNum, totalLength, avgLegth
+
     def _getBasicLengthStats(self):
         res = self.df.rename(columns={'text':'numMsgs'})
         res['lenMsgs'] = res['numMsgs'].apply(lambda x: len(x))
@@ -23,18 +38,32 @@ class ConvStatsDataFrame(IConvStats):
         #res.reset_index(level=0, inplace=True)
         return res[['numMsgs', 'lenMsgs', 'avgLen']]
 
-    def getBasicLengthStats(self, sender=None):
-        basicLengthStatsDf = self._getBasicLengthStats()
+    def getLexicalStats(self, sender=None):
+        lexicalStatsDf = self._getLexicalStats()
+        print(lexicalStatsDf)
         if not sender:
-            totalNum, totalLength, avgLegth = basicLengthStatsDf.loc['total'].tolist()
+            tokensCount, vocabularyCount, lexicalRichness = lexicalStatsDf.loc['total'].tolist()
         else:
-            totalNum, totalLength, avgLegth = basicLengthStatsDf.loc[sender].tolist()
-        return totalNum, totalLength, avgLegth
+            tokensCount, vocabularyCount, lexicalRichness = lexicalStatsDf.loc[sender].tolist()
+        return tokensCount, vocabularyCount, lexicalRichness
 
-    def getMessagesTotalLength(self):
-        msgsLen = self.df['text'].apply(lambda x: len(x))
-        totalLength = msgsLen.sum()
-        return totalLength
+    def _getLexicalStats(self):
+        res = self.df.rename(columns={'text':'text'})
+        res['year'] = res['date'].apply(lambda x: str.split(x, '.')[0])
+        res['month'] = res['date'].apply(lambda x: str.split(x, '.')[1])
+        res = res.groupby(['sender', 'year', 'month'], as_index=False).agg({'text' : lambda x: statsUtil.getWords(" ".join(x))})
+        res['tokensCount'] = res['text'].apply(lambda x: len(x))
+        res['vocabularyCount'] = res['text'].apply(lambda x: len(set(x)))
+
+        res.drop('text', axis=1, inplace=True)
+        tot = res.groupby(['year', 'month'], as_index=False).sum()
+        tot['sender'] = "total"
+        res = pd.concat([res, tot])
+
+        #TODO Missing tokencount = zero case
+        res['lexicalRichness'] = res['vocabularyCount']/res['tokensCount']
+
+        return res
 
     def generateDataFrameAgglomeratedStatsByHour(self):
         res = self._generateDataFrameAgglomeratedStatsBy('time', lambda x: str.split(x, ':')[0], 'hour')
@@ -45,47 +74,47 @@ class ConvStatsDataFrame(IConvStats):
         return res
 
     def generateDataFrameAgglomeratedStatsByYearAndMonth(self):
-        self.df['len'] = self.df['text'].apply(lambda x: len(x))
-        self.df['year'] = self.df['date'].apply(lambda x: str.split(x, '.')[0])
-        self.df['month'] = self.df['date'].apply(lambda x: str.split(x, '.')[1])
-        res = self.df.groupby(['sender', 'year', 'month'], as_index=False).agg({'text' : 'count',
-                                                       'len' : 'sum'})
-        print(res.head(10))
+        res = self.df.rename(columns={'text':'numMsgs'})
+        res['lenMsgs'] = res['numMsgs'].apply(lambda x: len(x))
+
+        res['year'] = res['date'].apply(lambda x: str.split(x, '.')[0])
+        res['month'] = res['date'].apply(lambda x: str.split(x, '.')[1])
+        res = res.groupby(['sender', 'year', 'month'], as_index=False).agg({'numMsgs' : 'count',
+                                                       'lenMsgs' : 'sum'})
+
         tot = res.groupby(['year', 'month'], as_index=False).sum()
         tot['sender'] = "total"
         res = pd.concat([res, tot])
-        res['avg'] = res['len']/res['text']
+        res['avgLen'] = res['lenMsgs']/res['numMsgs']
         return res
 
     def _generateDataFrameAgglomeratedStatsBy(self, colName, mFun, aggName):
-        self.df['len'] = self.df['text'].apply(lambda x: len(x))
-        self.df[aggName] = self.df[colName].apply(mFun)
-        res = self.df.groupby(['sender', aggName], as_index=False).agg({'text' : 'count',
-                                                       'len' : 'sum'})
-        print(res.head(10))
+        res = self.df.rename(columns={'text':'numMsgs'})
+        res['lenMsgs'] = res['numMsgs'].apply(lambda x: len(x))
+        res[aggName] = res[colName].apply(mFun)
+        res = res.groupby(['sender', aggName], as_index=False).agg({'numMsgs' : 'count',
+                                                       'lenMsgs' : 'sum'})
+
         tot = res.groupby([aggName], as_index=False).sum()
         tot['sender'] = "total"
         res = pd.concat([res, tot])
-        res['avg'] = res['len']/res['text']
-        print(res.head(10))
+        res['avgLen'] = res['lenMsgs']/res['numMsgs']
         return res
 
-        # if not agglomeratedMessages:
-        #     agglomeratedMessages = self._getMessagesBy(mFun, self.conversation.messages)
-        #
-        # tot = []
-        # tuples = []
-        # for k, a in agglomeratedMessages.items():
-        #     tot.append(list(self.getBasicLengthStats(self.conversation.sender1)))
-        #     tot.append(list(self.getBasicLengthStats(self.conversation.sender2)))
-        #     tuples.append((k, self.conversation.sender1))
-        #     tuples.append((k, self.conversation.sender2))
-        #
-        # print(tot)
-        # index = pd.MultiIndex.from_tuples(tuples, names=['hours', 'sender'])
-        # df = pd.DataFrame(tot, index=index, columns=["numMsgs", "lenMsgs", "avgMsgs"])
-        # stacked = df.stack()
-        # df.columns = df.columns.get_level_values(0)
-        # print(df)
-        #
-        # return df
+    def generateDataFrameSingleWordCountBy(self, word):
+        fun = lambda x: ConvStatsDataFrame.getWordsCount(" ".join(x))[word]
+        res = self.df.rename(columns={'text':'wordCount'})
+
+        res['year'] = res['date'].apply(lambda x: str.split(x, '.')[0])
+        res['month'] = res['date'].apply(lambda x: str.split(x, '.')[1])
+        res = res.groupby(['sender', 'year', 'month'], as_index=False).agg({'wordCount' : fun})
+
+        tot = res.groupby(['year', 'month'], as_index=False).sum()
+        tot['sender'] = "total"
+        res = pd.concat([res, tot])
+        return res
+
+    @staticmethod
+    def getWordsCount(text):
+        wordsCount = collections.Counter(statsUtil.getWords(text))
+        return wordsCount

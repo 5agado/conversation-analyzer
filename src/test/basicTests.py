@@ -5,7 +5,7 @@ import re
 from util import io as mio
 import argparse
 import queue as Q
-from util import convStats as mstats
+from util import conversationGenerator
 from datetime import datetime
 from model.message import Message
 from util import plotting as mplot
@@ -113,5 +113,9 @@ def plotDelayByLengthStats(conv):
     plt.scatter(x, y, color='red')
     plt.plot(x, regr.predict(x[:,np.newaxis]), color='blue')
     plt.show()
+
+def testConversationGenerator():
+    conv = conversationGenerator.generateNewConversation(100, "2014.01.30 06:01:57", "2014.12.30 06:01:57", ["s1", "s2"], 3, 20)
+    mio.printListToFile(conv, os.path.join(mio.getResourcesPath(), "test.txt"))
 
 init(sys.argv[1:])

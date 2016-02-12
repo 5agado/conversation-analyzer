@@ -1,13 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import statistics
-import numpy as np
-import pandas as pd
 import re
-import nltk
-import logging
-import sys
-import util.io as mio
 import math
 
 def getCentralTendencyValuesFor(measures):
@@ -24,6 +18,12 @@ def getVariationValuesFor(measures):
     stdDeviation = variance**0.5
     #stdDeviation = statistics.pstdev(measures)
     return meanDeviation, variance, stdDeviation
+
+def getWords(text):
+    mText = text.lower()
+    emoticons = getEmoticonsFromText(mText)
+    words = list(filter(lambda w: len(w) > 0, [cleanWord(w, emoticons) for w in mText.split()]))
+    return words
 
 def cleanWord(word, skipSet):
     if word in skipSet:

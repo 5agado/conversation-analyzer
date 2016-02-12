@@ -51,26 +51,46 @@ def plotDaysWithoutMessages(conv):
     plt.show()
 
 def plotHoursStats(data):
-    ax = sns.barplot(x="hour", y="len", hue="sender", data=data)
+    ax = sns.barplot(x="hour", y="lenMsgs", hue="sender", data=data)
     ax.set_title("Hour Stats")
     sns.plt.show()
 
 def plotMonthStats(data):
-    #ax = sns.barplot(x="month", y="len", hue="sender", data=data)
-    #ax.set_title("Month Stats"))
     grouped = data.groupby('year')
     count = 1
     plt.figure(1)
     for year, group in grouped:
         ax = plt.subplot(1,2,count)
         ax.set_title(year)
-        sns.barplot(x="month", y="len", hue="sender", data=group, ax=ax)
+        sns.barplot(x="month", y="lenMsgs", hue="sender", data=group, ax=ax)
         count += 1
-
-    #g = sns.FacetGrid(data, col="year")
-    #g.map(sns.barplot, 'month', 'len')
     sns.plt.show()
 
+def plotBasicLengthStatsHeatmap(data):
+    plt.title('Messages Total Length')
+    data = data.pivot('year', 'month', 'lenMsgs')
+    sns.heatmap(data)
+    sns.plt.show()
+
+def plotWordUsage(data, word):
+    plt.title('Word count for ' + word)
+    grouped = data.groupby('year')
+    count = 1
+    plt.figure(1)
+    for year, group in grouped:
+        ax = plt.subplot(1,2,count)
+        ax.set_title(year)
+        sns.boxplot(x="month", y="wordCount", hue="sender", data=group, ax=ax)
+        sns.despine(offset=10, trim=True)
+        count += 1
+    sns.plt.show()
+
+def plotRichnessVariation(data):
+    sns.pointplot(data=data, y='lexicalRichness', x='month', hue='sender')
+    sns.plt.show()
+
+#TODO consider using directly plotHoursStats(data):
+#need to check saved data format
 def plotHoursStatsFromFile(filepath):
     plotStatsFromFile(filepath, "Hours Stats", 3, 4, True)
 
