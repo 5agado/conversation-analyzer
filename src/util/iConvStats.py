@@ -9,6 +9,10 @@ from model.message import Message
 from util import statsUtil
 
 class IConvStats(metaclass=ABCMeta):
+    STATS_NAME_BASICLENGTH = 'basicLengthStats'
+    STATS_NAME_LEXICAL = 'lexicalStats'
+    STATS_NAME_WORDCOUNT = 'wordCountStats'
+
     def __init__(self, conversation):
         self.conversation = conversation
 
@@ -198,9 +202,9 @@ class IConvStats(metaclass=ABCMeta):
     def getLexicalStats(self, sender=None):
         pass
 
-    @abstractmethod
-    def generateDataFrameSingleWordCountBy(self, mFun, word):
-        pass
+    #@abstractmethod
+    #def generateDataFrameSingleWordCountBy(self, mFun, word):
+    #    pass
 
     def generateDataFrameEmoticonsStatsBy(self, mFun):
         agglomeratedMessages = IConvStats._getMessagesBy(mFun, self.conversation.messages)

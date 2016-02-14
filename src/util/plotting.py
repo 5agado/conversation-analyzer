@@ -7,15 +7,10 @@ import numpy as np
 import seaborn as sns
 from model.message import Message
 
-def plotBasicLengthStats(conv, anonymise=True):
+def plotBasicLengthStats(conv):
     totalNum, totalLength, avgLegth = conv.stats.getBasicLengthStats()
     totalNumS1, totalLengthS1, avgLegthS1 = conv.stats.getBasicLengthStats(conv.sender1)
     totalNumS2, totalLengthS2, avgLegthS2 = conv.stats.getBasicLengthStats(conv.sender2)
-
-    if anonymise:
-        labels = "Donnie", "Frank"
-    else:
-        labels = conv.sender1, conv.sender2
 
     colors = [(152/255,233/255,138/255), (197/255,176/255,213/255)]
 
@@ -32,7 +27,7 @@ def plotBasicLengthStats(conv, anonymise=True):
     plt.pie(sizes, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
     plt.axis('equal')
 
-    plt.legend(labels, loc='lower right')
+    plt.legend([conv.sender1, conv.sender2], loc='lower right')
     plt.show()
 
 def plotDaysWithoutMessages(conv):
@@ -55,38 +50,46 @@ def plotHoursStats(data):
     ax.set_title("Hour Stats")
     sns.plt.show()
 
-def plotMonthStats(data):
-    grouped = data.groupby('year')
-    count = 1
-    plt.figure(1)
-    for year, group in grouped:
-        ax = plt.subplot(1,2,count)
-        ax.set_title(year)
-        sns.barplot(x="month", y="lenMsgs", hue="sender", data=group, ax=ax)
-        count += 1
-    sns.plt.show()
+def plotMonthStats(data, yearToShow=None):
+    def plot(ax, df):
+        sns.barplot(x="month", y="lenMsgs", hue="sender", data=df, ax=ax)
 
-def plotBasicLengthStatsHeatmap(data):
-    plt.title('Messages Total Length')
-    data = data.pivot('year', 'month', 'lenMsgs')
-    sns.heatmap(data)
-    sns.plt.show()
+    _plotByYear(data, 'Messages Total Length', plot, yearToShow)
 
-def plotWordUsage(data, word):
-    plt.title('Word count for ' + word)
-    grouped = data.groupby('year')
-    count = 1
-    plt.figure(1)
-    for year, group in grouped:
-        ax = plt.subplot(1,2,count)
-        ax.set_title(year)
-        sns.boxplot(x="month", y="wordCount", hue="sender", data=group, ax=ax)
+def plotBasicLengthStatsHeatmap(data, yearToShow=None):
+    def plot(ax, df):
+        df = df.pivot('month', 'day', 'lenMsgs')
+        sns.heatmap(df, ax=ax)
+
+    _plotByYear(data, 'Messages Total Length', plot, yearToShow)
+
+def plotWordUsage(data, word, yearToShow=None):
+    def plot(ax, df):
+        sns.boxplot(x="month", y="wordCount", hue="sender", data=df, ax=ax)
         sns.despine(offset=10, trim=True)
-        count += 1
-    sns.plt.show()
 
-def plotRichnessVariation(data):
-    sns.pointplot(data=data, y='lexicalRichness', x='month', hue='sender')
+    _plotByYear(data, 'Word count for ' + word, plot, yearToShow)
+
+def plotRichnessVariation(data, yearToShow=None):
+    def plot(ax, df):
+        ax.set_ylim([0, 1])
+        sns.pointplot(data=df, y='lexicalRichness', x='month', hue='sender', ax=ax)
+
+    _plotByYear(data, 'Vocabulary Richness', plot, yearToShow)
+
+def _plotByYear(data, title, plotFun, yearToShow=None):
+    plt.title(title)
+    grouped = data.groupby('year')
+    numberOfYears = len(grouped) if yearToShow==None else 1
+    count = 1
+    plt.figure(1)
+    for year, group in grouped:
+        if yearToShow and yearToShow!=year:
+            continue
+        ax = plt.subplot(1,numberOfYears,count)
+        ax.set_title(year)
+        plotFun(ax, group)
+        count += 1
     sns.plt.show()
 
 #TODO consider using directly plotHoursStats(data):
