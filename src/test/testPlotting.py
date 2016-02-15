@@ -60,12 +60,10 @@ class PlottingTestCase(unittest.TestCase):
     def test_WordUsage(self):
         word = "the"
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
-        data = conv.stats.generateAgglomeratedStatsByYearAndMonth(IConvStats.STATS_NAME_WORDCOUNT)
-        print(data)
-        #data = conv.stats.generateDataFrameSingleWordCountBy(word)
+        data = conv.stats.generateAgglomeratedStatsByYearMonthDay(IConvStats.STATS_NAME_WORDCOUNT, word=word)
         data = data[data.sender != 'total']
 
-        #mplot.plotWordUsage(data, word)
+        mplot.plotWordUsage(data, word, '2014')
 
 if __name__ == '__main__':
     unittest.main()

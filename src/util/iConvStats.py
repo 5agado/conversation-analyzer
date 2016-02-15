@@ -12,6 +12,7 @@ class IConvStats(metaclass=ABCMeta):
     STATS_NAME_BASICLENGTH = 'basicLengthStats'
     STATS_NAME_LEXICAL = 'lexicalStats'
     STATS_NAME_WORDCOUNT = 'wordCountStats'
+    STATS_NAME_EMOTICONS = 'emoticonsStats'
 
     def __init__(self, conversation):
         self.conversation = conversation
@@ -24,22 +25,9 @@ class IConvStats(metaclass=ABCMeta):
     def generateDataFrameAgglomeratedStatsByHour(self):
         pass
 
+    @abstractmethod
     def getEmoticonsStats(self):
-        numEmoticons = IConvStats._getEmoticonsStats(self.conversation.messages)
-        numEmoticonsS1 = IConvStats._getEmoticonsStats(self.conversation.sender1Messages)
-        numEmoticonsS2 = IConvStats._getEmoticonsStats(self.conversation.sender2Messages)
-        return  numEmoticons, numEmoticonsS1, numEmoticonsS2
-
-    @staticmethod
-    def _getEmoticonsStats(messages):
-        numEmoticons = 0
-        if len(messages) == 0:
-            return numEmoticons
-        #emoticons = mio.getSetFromFile(mio.getResourcesPath() + "\emoticonList.txt")
-        for m in messages:
-            mEmoticons = statsUtil.getEmoticonsFromText(m.text)
-            numEmoticons += len(mEmoticons)
-        return numEmoticons
+        pass
 
     def getIntervalStats(self):
         start, end, interval = IConvStats._getIntervalStatsFor(self.conversation.messages)
@@ -146,26 +134,10 @@ class IConvStats(metaclass=ABCMeta):
     def getWordsCount(messages):
         pass
 
-    def getWordsCountStats(self, limit=0):
-        wCount = IConvStats._getWordsCountStats(self.conversation.messages, limit)
-        wCountS1 = IConvStats._getWordsCountStats(self.conversation.sender1Messages, limit)
-        wCountS2 = IConvStats._getWordsCountStats(self.conversation.sender2Messages, limit)
-
-        return wCount, wCountS1, wCountS2
-
     def getWordsMentioningStats(self):
         wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2 = \
             IConvStats._getWordsMentioningStats(self.conversation.sender1Messages, self.conversation.sender2Messages)
         return wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2
-
-    @staticmethod
-    def _getWordsCountStats(messages, limit = 0):
-        wCount = IConvStats.getWordsCount(messages)
-
-        if limit == 0:
-            return wCount.most_common()
-        else:
-            return wCount.most_common(limit)
 
     @staticmethod
     def _getWordsMentioningStats(sender1Messages, sender2Messages):

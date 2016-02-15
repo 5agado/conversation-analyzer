@@ -51,6 +51,22 @@ class ConvStats(IConvStats):
             totalLength += m.getMessageLength()
         return totalLength
 
+    def getWordsCountStats(self, limit=0):
+        wCount = ConvStats._getWordsCountStats(self.conversation.messages, limit)
+        wCountS1 = ConvStats._getWordsCountStats(self.conversation.sender1Messages, limit)
+        wCountS2 = ConvStats._getWordsCountStats(self.conversation.sender2Messages, limit)
+
+        return wCount, wCountS1, wCountS2
+
+    @staticmethod
+    def _getWordsCountStats(messages, limit = 0):
+        wCount = IConvStats.getWordsCount(messages)
+
+        if limit == 0:
+            return wCount.most_common()
+        else:
+            return wCount.most_common(limit)
+
     def generateDataFrameAgglomeratedStatsByHour(self):
         res = self._generateDataFrameAgglomeratedStatsBy(lambda m: m.getHour())
         return res
@@ -99,3 +115,20 @@ class ConvStats(IConvStats):
         text = [m.text.lower() for m in messages]
         wordsCount = collections.Counter(statsUtil.getWords(' '.join(text)))
         return wordsCount
+
+    def getEmoticonsStats(self):
+        numEmoticons = ConvStats._getEmoticonsStats(self.conversation.messages)
+        numEmoticonsS1 = ConvStats._getEmoticonsStats(self.conversation.sender1Messages)
+        numEmoticonsS2 = ConvStats._getEmoticonsStats(self.conversation.sender2Messages)
+        return  numEmoticons, numEmoticonsS1, numEmoticonsS2
+
+    @staticmethod
+    def _getEmoticonsStats(messages):
+        numEmoticons = 0
+        if len(messages) == 0:
+            return numEmoticons
+        #emoticons = mio.getSetFromFile(mio.getResourcesPath() + "\emoticonList.txt")
+        for m in messages:
+            mEmoticons = statsUtil.getEmoticonsFromText(m.text)
+            numEmoticons += len(mEmoticons)
+        return numEmoticons

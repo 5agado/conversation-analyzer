@@ -6,6 +6,7 @@ from util import io as mio
 import argparse
 import queue as Q
 from util import conversationGenerator
+from util.iConvStats import IConvStats
 from datetime import datetime
 from model.message import Message
 from util import plotting as mplot
@@ -20,7 +21,7 @@ import os
 from scipy.stats.stats import pearsonr
 import numpy as np
 import nltk
-from sklearn import datasets, linear_model
+#from sklearn import datasets, linear_model
 
 def initLogger():
     logger = logging.getLogger()
@@ -34,7 +35,7 @@ def initLogger():
 
 def init(_):
     parser = argparse.ArgumentParser(description='Conversation Analyzer')
-    parser.add_argument('-p', metavar='conversationfilePath', dest='filepath', required=True)
+    parser.add_argument('-p', metavar='conversationfilePath', dest='filepath')
     parser.add_argument('-n', metavar='numberOfMessages', type=int,
                         dest='numMsgs', default=1000)
     parser.add_argument('-l', metavar='wordsCountLimit', type=int,
@@ -46,38 +47,26 @@ def init(_):
     wCountLimit = args.wCountLimit
 
     initLogger()
-    #conv = Conversation(mio.getResourcesPath() + "\\unittest\\test_nltk_conv.txt")
-    conv = Conversation(filepath)
+    conv = Conversation(mio.getResourcesPath() + "\\unittest\\test_nltk_conv.txt")
+    #conv = Conversation(filepath)
     #conv.loadMessages(numMsgs, "2014.09.26", "2014.09.30")
     conv.loadMessages(numMsgs)
 
     q = Q.PriorityQueue()
-    wCount, wCountS1, wCountS2 = conv.getWordsCountStats()
+    wCount, wCountS1, wCountS2 = conv.stats.getWordCountStats(10)
+    print(wCount)
+    print(wCountS1)
+    print(wCountS2)
+
+    wCount = dict(wCount)
     wCountS1 = dict(wCountS1)
     wCountS2 = dict(wCountS2)
-    maxRatio = 0
-    word = None
-    for k, count1 in wCountS1.items():
-        if k in wCountS2:
-            ratio = count1/wCountS2[k]
-            #q.put((, word))
-            if ratio>maxRatio:
-                maxRatio = ratio
-                word = k
-            if ratio>5:
-                print(k)
-    print("For sender " + conv.sender1)
-    while not q.empty():
-        print (q.get())
-    print(word)
-    print(wCountS1[word])
-    print(wCountS2[word])
-    print(maxRatio)
-    #mio.printIntervalStatsFor(conv)
-    #mnlp.senderClassification(conv)
-
-    #sentences = emoticons.split(conv.getEntireConvText())
-    #print(sentences)
+    for word, totalCount in wCount.items():
+        s1Count = 0 if (word not in wCountS1) else wCountS1[word]
+        s2Count = 0 if (word not in wCountS2) else wCountS2[word]
+        s1Ratio = s1Count/totalCount
+        s2Ratio = s2Count/totalCount
+        print(word + ": sender1 = " +str(s1Ratio) + ", sender2 = " +str(s2Ratio) )
 
     #sentences = mnlp.sentenceSegmentation(conv.getEntireConvText())
     #sentences = mnlp.wordTokenization(conv.getEntireConvText())
