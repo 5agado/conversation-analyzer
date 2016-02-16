@@ -29,6 +29,12 @@ class PlottingTestCase(unittest.TestCase):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
         mplot.plotBasicLengthStats(conv)
 
+    def test_TotalBasicLengthStats(self):
+        conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
+        data = conv.stats.generateAgglomeratedStatsByYearAndMonth(IConvStats.STATS_NAME_BASICLENGTH)
+        #data = data[data.sender == 'total']
+        mplot.plotTotalBasicLengthStats(data, '2015')
+
     def test_hoursStats(self):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
         data = conv.stats.generateAgglomeratedStatsByHour(IConvStats.STATS_NAME_BASICLENGTH)

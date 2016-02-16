@@ -30,6 +30,31 @@ def plotBasicLengthStats(conv):
     plt.legend([conv.sender1, conv.sender2], loc='lower right')
     plt.show()
 
+def plotTotalBasicLengthStats(data, yearToShow=None):
+    #figureAesthetic()
+    #plt.title('Basic Lenghts')
+    grouped = data.groupby('year')
+    for year, group in grouped:
+        if yearToShow and yearToShow!=year:
+            continue
+        group.drop('year', axis=1, inplace=True)
+        #group.drop('month', axis=1, inplace=True)
+        #print(group.head(10))
+        df = group.set_index(['month', 'sender'])
+        #print(df.head(10))
+        #df = df.unstack(level=0)
+        df = df.stack()
+        df = df.reset_index()
+        #print(df.head(10))
+        df.columns.values[2] = "stats"
+        df.columns.values[3] = 'vals'
+        print(df)
+        #g = sns.pairplot(data=group, hue='sender', y_vars=['lenMsgs', 'numMsgs'],
+        #              x_vars=['lenMsgs', 'numMsgs'])
+        g = sns.FacetGrid(df, hue="stats", row='sender', margin_titles=True)
+        g.map(plt.bar, "month", "vals")
+    sns.plt.show()
+
 def plotDaysWithoutMessages(conv):
     #TODO extract method
     start = datetime.strptime(conv.messages[0].date, Message.DATE_FORMAT).date()
@@ -45,18 +70,26 @@ def plotDaysWithoutMessages(conv):
     plt.gcf().autofmt_xdate()
     plt.show()
 
+def figureAesthetic():
+    sns.set_context("poster")
+    sns.set_style("darkgrid")
+    sns.plt.grid(True)
+
 def plotHoursStats(data):
+    figureAesthetic()
     ax = sns.barplot(x="hour", y="lenMsgs", hue="sender", data=data)
     ax.set_title("Hour Stats")
     sns.plt.show()
 
 def plotMonthStats(data, yearToShow=None):
+    figureAesthetic()
     def plot(ax, df):
         sns.barplot(x="month", y="lenMsgs", hue="sender", data=df, ax=ax)
 
     _plotByYear(data, 'Messages Total Length', plot, yearToShow)
 
 def plotBasicLengthStatsHeatmap(data, yearToShow=None):
+    figureAesthetic()
     def plot(ax, df):
         df = df.pivot('month', 'day', 'lenMsgs')
         sns.heatmap(df, ax=ax)
@@ -64,6 +97,7 @@ def plotBasicLengthStatsHeatmap(data, yearToShow=None):
     _plotByYear(data, 'Messages Total Length', plot, yearToShow)
 
 def plotWordUsage(data, word, yearToShow=None):
+    figureAesthetic()
     def plot(ax, df):
         sns.boxplot(x="month", y="wordCount", hue="sender", data=df, ax=ax)
         sns.despine(offset=10, trim=True)
@@ -71,6 +105,7 @@ def plotWordUsage(data, word, yearToShow=None):
     _plotByYear(data, 'Word count for ' + word, plot, yearToShow)
 
 def plotRichnessVariation(data, yearToShow=None):
+    figureAesthetic()
     def plot(ax, df):
         ax.set_ylim([0, 1])
         sns.pointplot(data=df, y='lexicalRichness', x='month', hue='sender', ax=ax)

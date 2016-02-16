@@ -47,26 +47,14 @@ def init(_):
     wCountLimit = args.wCountLimit
 
     initLogger()
-    conv = Conversation(mio.getResourcesPath() + "\\unittest\\test_nltk_conv.txt")
+    conv = Conversation(mio.getResourcesPath() + "\\unittest\\test_plotting.txt")
     #conv = Conversation(filepath)
     #conv.loadMessages(numMsgs, "2014.09.26", "2014.09.30")
     conv.loadMessages(numMsgs)
-
-    q = Q.PriorityQueue()
-    wCount, wCountS1, wCountS2 = conv.stats.getWordCountStats(10)
-    print(wCount)
-    print(wCountS1)
-    print(wCountS2)
-
-    wCount = dict(wCount)
-    wCountS1 = dict(wCountS1)
-    wCountS2 = dict(wCountS2)
-    for word, totalCount in wCount.items():
-        s1Count = 0 if (word not in wCountS1) else wCountS1[word]
-        s2Count = 0 if (word not in wCountS2) else wCountS2[word]
-        s1Ratio = s1Count/totalCount
-        s2Ratio = s2Count/totalCount
-        print(word + ": sender1 = " +str(s1Ratio) + ", sender2 = " +str(s2Ratio) )
+    #df = conv.stats._getWordFrequency()
+    #print(df.head())
+    testZipfLaw(conv)
+    return
 
     #sentences = mnlp.sentenceSegmentation(conv.getEntireConvText())
     #sentences = mnlp.wordTokenization(conv.getEntireConvText())
@@ -83,6 +71,20 @@ def init(_):
     #tokens = nltk.word_tokenize(rawText)
     #words = [w.lower() for w in tokens]
     #mio.printAllLexicalStats(conv)
+
+def testZipfLaw(conv):
+    _, wCount, _ = conv.stats.getWordCountStats(100)
+    print(wCount)
+
+    (_, occFirst) = wCount[0]
+    for i, (word, count) in enumerate(wCount[:10], start=1):
+        print(word + " " + str(i) + " = " +  str(occFirst/count))
+        print(word + " " + str(count) + " = " +  str(occFirst/i))
+    words, count = zip(*wCount)
+    x = range(len(words))
+
+    mplot.plotStatsLines("Zip's Law", ['Rank', 'Count', 'Word'], x, words, count, None)
+    return
 
 def plotDelayByLengthStats(conv):
     delay, senderDelay = mstats.getDelayStatsByLength(conv)

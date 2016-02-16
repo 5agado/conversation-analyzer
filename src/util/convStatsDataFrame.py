@@ -2,6 +2,8 @@ from util.iConvStats import IConvStats
 import pandas as pd
 import collections
 import numpy as np
+from model.message import Message
+from datetime import datetime, timedelta
 from util import statsUtil
 
 class ConvStatsDataFrame(IConvStats):
@@ -50,29 +52,6 @@ class ConvStatsDataFrame(IConvStats):
             res = self._generateWordCountStatsBy(groupByColumns, **kwargs)
         return res
 
-    def _generateLexicalAgglomeratedStatsBy(self, groupByColumns=[]):
-        res = self.df.rename(columns={'text':'text'})
-        #TODO make it quicker. No need to clean words or check emoticons, lower case should be
-        #enough, probably the best is to make another simpler method in statsUtil
-        res = res.groupby(['sender'] + groupByColumns, as_index=False).agg({'text' : lambda x: statsUtil.getWords(" ".join(x))})
-        res['tokensCount'] = res['text'].apply(lambda x: len(x))
-        res['vocabularyCount'] = res['text'].apply(lambda x: len(set(x)))
-
-        res.drop('text', axis=1, inplace=True)
-
-        if groupByColumns:
-            tot = res.groupby(groupByColumns, as_index=False).sum()
-            tot['sender'] = "total"
-            res = pd.concat([res, tot])
-            #TODO Missing tokencount = zero case
-            res['lexicalRichness'] = res['vocabularyCount']/res['tokensCount']
-            return res
-        else:
-            res.set_index(['sender'], inplace=True)
-            res.loc['total'] = res.sum()
-            res['lexicalRichness'] = res['vocabularyCount']/res['tokensCount']
-            return res[['tokensCount', 'vocabularyCount', 'lexicalRichness']]
-
     def _generateEmoticonsStatsBy(self, groupByColumns=[]):
         res = self.df.rename(columns={'text':'text'})
         grouped = res.groupby(['sender'] + groupByColumns, as_index=False)
@@ -115,7 +94,7 @@ class ConvStatsDataFrame(IConvStats):
         if word:
             fun = lambda x: ConvStatsDataFrame.getWordsCount(" ".join(x))[word]
         else:
-            fun = lambda x: sorted(ConvStatsDataFrame.getWordsCount(" ".join(x)).items())
+            fun = lambda x: sorted(ConvStatsDataFrame.getWordsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True)
         res = self.df.rename(columns={'text':'wordCount'})
         res['total'] = 'total'
         tot = res.groupby(['total'] + groupByColumns, as_index=False).agg({'wordCount' : fun})
@@ -130,6 +109,30 @@ class ConvStatsDataFrame(IConvStats):
             res.set_index(['sender'], inplace=True)
             #res.loc['total'] = res.sum()
             return res
+
+    #TODO just reuse wordCount df
+    def _generateLexicalAgglomeratedStatsBy(self, groupByColumns=[]):
+        res = self.df.rename(columns={'text':'text'})
+        #TODO make it quicker. No need to clean words or check emoticons, lower case should be
+        #enough, probably the best is to make another simpler method in statsUtil
+        res = res.groupby(['sender'] + groupByColumns, as_index=False).agg({'text' : lambda x: statsUtil.getWords(" ".join(x))})
+        res['tokensCount'] = res['text'].apply(lambda x: len(x))
+        res['vocabularyCount'] = res['text'].apply(lambda x: len(set(x)))
+
+        res.drop('text', axis=1, inplace=True)
+
+        if groupByColumns:
+            tot = res.groupby(groupByColumns, as_index=False).sum()
+            tot['sender'] = "total"
+            res = pd.concat([res, tot])
+            #TODO Missing tokencount = zero case
+            res['lexicalRichness'] = res['vocabularyCount']/res['tokensCount']
+            return res
+        else:
+            res.set_index(['sender'], inplace=True)
+            res.loc['total'] = res.sum()
+            res['lexicalRichness'] = res['vocabularyCount']/res['tokensCount']
+            return res[['tokensCount', 'vocabularyCount', 'lexicalRichness']]
 
     @staticmethod
     def getWordsCount(text):
@@ -181,3 +184,67 @@ class ConvStatsDataFrame(IConvStats):
         else:
             numEmoticons, emoticonsRatio, lenMsgs = emoticonStatsDf.loc[sender].tolist()
         return  numEmoticons, emoticonsRatio, lenMsgs
+
+    def getIntervalStats(self):
+        start, end, interval = self._getIntervalStatsFor()
+        return start, end, interval
+
+    @staticmethod
+    def _getIntervalStatsFor(self):
+        startDatetime = ' '.join(self.df.iloc[0][['date','time']].values)
+        endDatetime = ' '.join(self.df.iloc[-1][['date','time']].values)
+        start = datetime.strptime(startDatetime, Message.DATE_TIME_FORMAT)
+        end = datetime.strptime(endDatetime, Message.DATE_TIME_FORMAT)
+        interval = end - start
+
+        return startDatetime, endDatetime, interval
+
+    def getDaysWithoutMessages(self):
+        days = self._getDaysWithoutMessages()
+        return days
+
+    def _getDaysWithoutMessages(self):
+        """Generate a date-range between the date of the first and last message
+        and returns those dates for which there is no corresponding message in messages"""
+        daysWithMsgs = self.df['date'].drop_duplicates()
+
+        datelist = pd.Series(pd.date_range(self.df.iloc[0]['date'], self.df.iloc[-1]['date']))
+        datelist = datelist.apply(lambda x:x.date().strftime(Message.DATE_FORMAT))
+        # data.index = pd.DatetimeIndex(data.index)
+        # data = data.reindex(datelist, fill_value=0)
+
+        daysWithoutMsgs = np.setdiff1d(datelist, daysWithMsgs)
+        return daysWithoutMsgs
+
+    def getWordsMentioningStats(self):
+        wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2 = \
+            self._getWordsMentioningStats()
+        return wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2
+
+    def _getWordsMentioningStats(self):
+        df = self._getWordFrequency()
+
+        wordsSaidJustByS1 = df[df[self.conversation.sender2]==0].index.values
+        wordsSaidJustByS2 = df[df[self.conversation.sender1]==0].index.values
+
+        return wordsSaidJustByS1, wordsSaidJustByS2
+
+    def _getWordFrequency(self):
+        wCount, wCountS1, wCountS2 = self.getWordCountStats()
+        print(wCount)
+        print(wCountS1)
+        print(wCountS2)
+
+        wCount = dict(wCount)
+        wCountS1 = dict(wCountS1)
+        wCountS2 = dict(wCountS2)
+        df = pd.DataFrame(index=[x[0] for x in wCount.items()],
+                          columns=[self.conversation.sender1, self.conversation.sender2, 'total'])
+        for word, totalCount in wCount.items():
+            s1Count = 0 if (word not in wCountS1) else wCountS1[word]
+            s2Count = 0 if (word not in wCountS2) else wCountS2[word]
+            df.loc[word] = [s1Count, s2Count, totalCount]
+
+        df[self.conversation.sender1 + '_ratio'] = df[self.conversation.sender1]/df['total']
+        df[self.conversation.sender2 + '_ratio'] = df[self.conversation.sender2]/df['total']
+        return df
