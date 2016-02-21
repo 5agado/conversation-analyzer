@@ -1,6 +1,5 @@
 from util.iConvStats import IConvStats
 import pandas as pd
-import collections
 import numpy as np
 from model.message import Message
 from datetime import datetime, timedelta
@@ -42,6 +41,9 @@ class ConvStatsDataFrame(IConvStats):
 
     def generateAgglomeratedStatsByYearMonthDay(self, statsType, **kwargs):
         return self._generateAgglomeratedStats(statsType, ['year', 'month', 'day'], **kwargs)
+
+    def generateAgglomeratedStatsByYearMonthHour(self, statsType, **kwargs):
+        return self._generateAgglomeratedStats(statsType, ['year', 'month', 'hour'], **kwargs)
 
     def _generateAgglomeratedStats(self, statsType, groupByColumns=[], **kwargs):
         if statsType == IConvStats.STATS_NAME_BASICLENGTH:
@@ -90,27 +92,35 @@ class ConvStatsDataFrame(IConvStats):
             res['avgLen'] = res['lenMsgs']/res['numMsgs']
             return res[['numMsgs', 'lenMsgs', 'avgLen']]
 
+    #TODO consider option of having 0 if the word does not appear for a specific sender
     def _generateWordCountStatsBy(self, groupByColumns=[], word=None):
-        if word:
-            fun = lambda x: ConvStatsDataFrame.getWordsCount(" ".join(x))[word]
-        else:
-            fun = lambda x: sorted(ConvStatsDataFrame.getWordsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True)
+        fun = lambda x: sorted(statsUtil.getWordsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True)
         res = self.df.rename(columns={'text':'wordCount'})
-        res['total'] = 'total'
-        tot = res.groupby(['total'] + groupByColumns, as_index=False).agg({'wordCount' : fun})
-        tot = tot.rename(columns = {'total':'sender'})
         res = res.groupby(['sender'] + groupByColumns, as_index=False).agg({'wordCount' : fun})
+        grouped = res.groupby(['sender'] + groupByColumns, as_index=False)
+        groupDfs = []
+        for name, group in grouped:
+            wordCount = group['wordCount'].values[0]
 
-        if groupByColumns:
-            res = pd.concat([res, tot])
-            return res
-        else:
-            res = pd.concat([res, tot])
-            res.set_index(['sender'], inplace=True)
-            #res.loc['total'] = res.sum()
-            return res
+            #name is a tuple
+            if groupByColumns:
+                groupData = [[x[0], x[1]] + [n for n in name] for x in wordCount if (not word or x[0]==word)]
+            #name is a single value
+            else:
+                groupData = [[x[0], x[1], name] for x in wordCount if (not word or x[0]==word)]
+            df = pd.DataFrame(groupData, columns=['word', 'count', 'sender']+groupByColumns)
+            groupDfs.append(df)
 
-    #TODO just reuse wordCount df
+        results = pd.concat(groupDfs)
+        results['total'] = results['count']
+        tmp = results.groupby(['word']+groupByColumns, as_index=True).agg({'total' : 'sum'})
+        results.set_index(['word']+groupByColumns, inplace=True)
+        results['total'] = tmp['total']
+        results['frequency'] = results['count']/results['total']
+        #results.set_index(['word', 'sender']+groupByColumns, inplace=True)
+        return results
+
+    #TODO ??option of just reuse wordCount df ??
     def _generateLexicalAgglomeratedStatsBy(self, groupByColumns=[]):
         res = self.df.rename(columns={'text':'text'})
         #TODO make it quicker. No need to clean words or check emoticons, lower case should be
@@ -134,30 +144,29 @@ class ConvStatsDataFrame(IConvStats):
             res['lexicalRichness'] = res['vocabularyCount']/res['tokensCount']
             return res[['tokensCount', 'vocabularyCount', 'lexicalRichness']]
 
-    @staticmethod
-    def getWordsCount(text):
-        wordsCount = collections.Counter(statsUtil.getWords(text))
-        return wordsCount
-
     def generateDataFrameAgglomeratedStatsByHour(self):
         self.generateAgglomeratedStatsByHour(IConvStats.STATS_NAME_BASICLENGTH)
 
     def getWordCountStats(self, limit=0, word=None):
         def extractWordCount(df, sender, limit):
-            wCount = df.loc[sender]['wordCount']
-            if limit == 0 or np.isscalar(wCount):
-                return wCount
+            wCount = df[df['sender']==sender]
+            #print(wCount)
+            if word:
+                val = wCount['count'].values
+                return 0 if not val else val[0]
             else:
-                return wCount[:limit]
+                if limit != 0:
+                    return [(w, row[0]) for w, row in wCount.iterrows()][:limit]
+                else:
+                    return [(w, row[0]) for w, row in wCount.iterrows()]
 
         if word:
             wordsCountStatsDf = self.generateAgglomeratedStatsOverall(IConvStats.STATS_NAME_WORDCOUNT, word=word)
         else:
             wordsCountStatsDf = self.generateAgglomeratedStatsOverall(IConvStats.STATS_NAME_WORDCOUNT)
-
         wCountS1 = extractWordCount(wordsCountStatsDf, self.conversation.sender1, limit)
         wCountS2 = extractWordCount(wordsCountStatsDf, self.conversation.sender2, limit)
-        wCount = extractWordCount(wordsCountStatsDf, 'total', limit)
+        wCount = wCountS1 + wCountS2
 
         return wCount, wCountS1, wCountS2
 
@@ -171,6 +180,7 @@ class ConvStatsDataFrame(IConvStats):
 
     def getLexicalStats(self, sender=None):
         lexicalStatsDf = self.generateAgglomeratedStatsOverall(IConvStats.STATS_NAME_LEXICAL)
+        print(lexicalStatsDf)
         if not sender:
             tokensCount, vocabularyCount, lexicalRichness = lexicalStatsDf.loc['total'].tolist()
         else:
@@ -216,35 +226,11 @@ class ConvStatsDataFrame(IConvStats):
         daysWithoutMsgs = np.setdiff1d(datelist, daysWithMsgs)
         return daysWithoutMsgs
 
+    #TODO rename
     def getWordsMentioningStats(self):
-        wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2 = \
-            self._getWordsMentioningStats()
+        df = self.generateAgglomeratedStatsOverall(IConvStats.STATS_NAME_WORDCOUNT)
+        df = df.reset_index()
+        wordsSaidByBoth = set(df['word'].values)
+        wordsSaidJustByS1 = set(df[df['sender']==self.conversation.sender2]['word'].values)
+        wordsSaidJustByS2 = set(df[df['sender']==self.conversation.sender1]['word'].values)
         return wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2
-
-    def _getWordsMentioningStats(self):
-        df = self._getWordFrequency()
-
-        wordsSaidJustByS1 = df[df[self.conversation.sender2]==0].index.values
-        wordsSaidJustByS2 = df[df[self.conversation.sender1]==0].index.values
-
-        return wordsSaidJustByS1, wordsSaidJustByS2
-
-    def _getWordFrequency(self):
-        wCount, wCountS1, wCountS2 = self.getWordCountStats()
-        print(wCount)
-        print(wCountS1)
-        print(wCountS2)
-
-        wCount = dict(wCount)
-        wCountS1 = dict(wCountS1)
-        wCountS2 = dict(wCountS2)
-        df = pd.DataFrame(index=[x[0] for x in wCount.items()],
-                          columns=[self.conversation.sender1, self.conversation.sender2, 'total'])
-        for word, totalCount in wCount.items():
-            s1Count = 0 if (word not in wCountS1) else wCountS1[word]
-            s2Count = 0 if (word not in wCountS2) else wCountS2[word]
-            df.loc[word] = [s1Count, s2Count, totalCount]
-
-        df[self.conversation.sender1 + '_ratio'] = df[self.conversation.sender1]/df['total']
-        df[self.conversation.sender2 + '_ratio'] = df[self.conversation.sender2]/df['total']
-        return df

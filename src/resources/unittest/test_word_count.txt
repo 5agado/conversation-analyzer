@@ -1,0 +1,5 @@
+2014.09.27 15:27:42 S1 Hello My name is Sender1
+2014.09.27 15:27:50 S2 Hello My name is Sender2 xd
+2014.09.28 06:00:57 S1 Hello! How are you?
+2014.09.30 06:01:57 S2 Fine :d
+2014.09.30 06:01:58 S1 Bye

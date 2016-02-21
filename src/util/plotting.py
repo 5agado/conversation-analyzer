@@ -30,29 +30,50 @@ def plotBasicLengthStats(conv):
     plt.legend([conv.sender1, conv.sender2], loc='lower right')
     plt.show()
 
-def plotTotalBasicLengthStats(data, yearToShow=None):
+def plotTotalBasicLengthStats(data):
     #figureAesthetic()
-    #plt.title('Basic Lenghts')
+    sns.set_context("poster")
+    #sns.plt.title('Basic Lenght Stats')
+
+    df = data.set_index(['year', 'month', 'sender'])
+
+    df = df.stack()
+    df = df.reset_index()
+    df.columns.values[3] = 'stats'
+    df.columns.values[4] = 'vals'
+    print(df.head(10))
+    g = sns.FacetGrid(df, col='year', row='stats', margin_titles=True, sharey=False)
+    g.map(sns.barplot, 'month', 'vals', 'sender')
+    g.add_legend()
+    sns.plt.show()
+
+def plotHourStatsByYearAndMonth(data, yearToShow=[]):
+    #figureAesthetic()
+    sns.set_context("poster")
+    #sns.plt.title('Basic Lenght Stats')
+
     grouped = data.groupby('year')
     for year, group in grouped:
         if yearToShow and yearToShow!=year:
             continue
-        group.drop('year', axis=1, inplace=True)
-        #group.drop('month', axis=1, inplace=True)
-        #print(group.head(10))
-        df = group.set_index(['month', 'sender'])
-        #print(df.head(10))
-        #df = df.unstack(level=0)
+        df = group.drop('year', 1)
+        print(group.head(10))
+        df = df.set_index(['hour', 'month', 'sender'])
+        print(df.head(10))
         df = df.stack()
         df = df.reset_index()
-        #print(df.head(10))
-        df.columns.values[2] = "stats"
-        df.columns.values[3] = 'vals'
-        print(df)
-        #g = sns.pairplot(data=group, hue='sender', y_vars=['lenMsgs', 'numMsgs'],
-        #              x_vars=['lenMsgs', 'numMsgs'])
-        g = sns.FacetGrid(df, hue="stats", row='sender', margin_titles=True)
-        g.map(plt.bar, "month", "vals")
+        df.columns.values[3] = 'stats'
+        df.columns.values[4] = 'vals'
+        print(df.head(10))
+        g = sns.FacetGrid(df, col='month', row='stats', margin_titles=True, sharey=False)
+        g.map(sns.barplot, 'hour', 'vals', 'sender')
+        g.add_legend()
+    sns.plt.show()
+
+def plotHoursStats(data):
+    figureAesthetic()
+    ax = sns.barplot(x="hour", y="lenMsgs", hue="sender", data=data)
+    ax.set_title("Hour Stats")
     sns.plt.show()
 
 def plotDaysWithoutMessages(conv):
@@ -75,12 +96,6 @@ def figureAesthetic():
     sns.set_style("darkgrid")
     sns.plt.grid(True)
 
-def plotHoursStats(data):
-    figureAesthetic()
-    ax = sns.barplot(x="hour", y="lenMsgs", hue="sender", data=data)
-    ax.set_title("Hour Stats")
-    sns.plt.show()
-
 def plotMonthStats(data, yearToShow=None):
     figureAesthetic()
     def plot(ax, df):
@@ -96,13 +111,80 @@ def plotBasicLengthStatsHeatmap(data, yearToShow=None):
 
     _plotByYear(data, 'Messages Total Length', plot, yearToShow)
 
-def plotWordUsage(data, word, yearToShow=None):
+def plotSingleWordUsage(data, word, yearToShow=None):
     figureAesthetic()
     def plot(ax, df):
-        sns.boxplot(x="month", y="wordCount", hue="sender", data=df, ax=ax)
+        sns.boxplot(x="month", y="count", hue="sender", data=df, ax=ax)
         sns.despine(offset=10, trim=True)
 
+    #def plot(ax, df):
+    #    sns.violinplot(x="month", y="count", hue='sender', scale="count", data=df, ax=ax)
+
     _plotByYear(data, 'Word count for ' + word, plot, yearToShow)
+
+def plotWordsUsageByHour(data, words, yearToShow=None):
+    #figureAesthetic()
+
+    data = data[data['word'].isin(words)]
+    print(data.sort(['word', 'hour']))
+    #plt.title("Word Count by Hour")
+    #sns.violinplot(x="hour", y="word", hue='sender', scale="count", data=data)
+    #sns.pointplot(x="hour", y="total", hue='word', data=data)
+
+    g = sns.FacetGrid(data, row='word', margin_titles=True, sharey=False, sharex=False)
+    g.map(sns.pointplot, 'hour', 'count', 'sender')
+    g.add_legend()
+    sns.plt.show()
+
+def plotWordsUsage(data, words, yearToShow=None):
+    figureAesthetic()
+    def plot(ax, df):
+        print(df)
+        #sns.pointplot(x="month", y="total", hue='word', data=df, ax=ax)
+        #sns.tsplot(data=df, time='month', value='total', condition='word', ax=ax)
+        df.plot(x='month', y='total', c='word', ax=ax)
+
+    def plot(ax, df):
+        g = sns.FacetGrid(df, row='word', margin_titles=True, sharey=True, sharex=True)
+        g.map(sns.barplot, 'month', 'count', 'sender')
+        g.add_legend()
+
+    # def plot(ax, df):
+    #     df = df.drop('year', 1)
+    #     print(df.head())
+    #     g = sns.PairGrid(df.sort_values("total", ascending=False),
+    #              x_vars=set(df.month.values), y_vars=["words"])
+    #     g.map(sns.stripplot)
+
+    _plotByYear(data[data['word'].isin(words)], 'Word count', plot, yearToShow)
+
+def plotZipfLaw(words, count):
+    figureAesthetic()
+    plt.title("Zip's Law")
+
+    sns.set_style("darkgrid")
+
+    plt.figure(1)
+    ax = plt.subplot(1,2,1)
+    plt.xlabel("Word")
+    plt.ylabel("Count")
+    numWords = 20
+    x = np.arange(numWords)
+    y = count[:numWords]
+    plt.xticks(np.arange(len(x)), words[:numWords])
+    plt.gcf().autofmt_xdate()
+    ax.plot(x, y, c='r', linewidth=2)
+
+    ax = plt.subplot(1,2,2)
+    plt.xlabel("log(rank)")
+    plt.ylabel("log(count)")
+    x = np.arange(len(words))
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.legend()
+    ax.plot(x,count, c='r', linewidth=2)
+
+    plt.show()
 
 def plotRichnessVariation(data, yearToShow=None):
     figureAesthetic()
@@ -129,82 +211,77 @@ def _plotByYear(data, title, plotFun, yearToShow=None):
 
 #TODO consider using directly plotHoursStats(data):
 #need to check saved data format
-def plotHoursStatsFromFile(filepath):
-    plotStatsFromFile(filepath, "Hours Stats", 3, 4, True)
-
-def plotMonthStatsFromFile(filepath):
-    plotStatsFromFile(filepath, "Months Stats", 3, 4, True)
-
-def plotDayStatsFromFile(filepath):
-    plotStatsFromFile(filepath, "Day Stats", 1, 2)
-    plotStatsFromFile(filepath, "Day Stats", 3, 4)
-    plotStatsFromFile(filepath, "Day Stats", 5, 6)
-    plotStatsFromFile(filepath, "Day Stats", 7)
-    plotStatsFromFile(filepath, "Day Stats", 8)
-
-def plotStatsFromFile(filepath, description, y1Idx, y2Idx=None, bar=False):
-    data = mio.loadDataFromFile(filepath)
-
-    labels = ([])
-    labels.append(list(data.columns.values)[0])
-    labels.append(list(data.columns.values)[y1Idx])
-
-    x = np.arange(len(data.ix[:,0]))
-    xLabels = data.ix[:,0]
-    y1 = data.ix[:,y1Idx]
-    y2 = None
-
-    if y2Idx:
-        labels.append(list(data.columns.values)[y2Idx])
-        y2 = data.ix[:,y2Idx]
-
-    if bar:
-        plotStatsBars(description, labels, x, xLabels, y1, y2)
-    else:
-        plotStatsLines(description, labels, x, xLabels, y1, y2)
-
-def plotStatsBars(description, labels, x, xLabels, y1, y2):
-    bar_width = 0.45
-    preparePlot(description, labels[0], 'Count')
-
-    plt.bar(x, y1, bar_width, facecolor='#9999ff', edgecolor='white', label=labels[1])
-
-    if type(y2) != type(None):
-        plt.bar(x+bar_width, y2, bar_width, facecolor='#ff9999', edgecolor='white', label=labels[2])
-
-
-    plt.xticks(np.arange(len(x))+bar_width, xLabels)
-
-    #plt.xticks(np.arange(len(data)), xLabels)
-
-    #mean_line = ax1.plot(x,[y1.median() for i in x], label='Mean', linestyle='--')
-    #mean_line = ax1.plot(x,[y2.mean() for i in x], label='Mean2', linestyle=':')
-
-    plt.legend(loc='upper center')
-    plt.tight_layout()
-    plt.show()
+# def plotHoursStatsFromFile(filepath):
+#     plotStatsFromFile(filepath, "Hours Stats", 3, 4, True)
+#
+# def plotMonthStatsFromFile(filepath):
+#     plotStatsFromFile(filepath, "Months Stats", 3, 4, True)
+#
+# def plotDayStatsFromFile(filepath):
+#     plotStatsFromFile(filepath, "Day Stats", 1, 2)
+#     plotStatsFromFile(filepath, "Day Stats", 3, 4)
+#     plotStatsFromFile(filepath, "Day Stats", 5, 6)
+#     plotStatsFromFile(filepath, "Day Stats", 7)
+#     plotStatsFromFile(filepath, "Day Stats", 8)
+#
+# def plotStatsFromFile(filepath, description, y1Idx, y2Idx=None, bar=False):
+#     data = mio.loadDataFromFile(filepath)
+#
+#     labels = ([])
+#     labels.append(list(data.columns.values)[0])
+#     labels.append(list(data.columns.values)[y1Idx])
+#
+#     x = np.arange(len(data.ix[:,0]))
+#     xLabels = data.ix[:,0]
+#     y1 = data.ix[:,y1Idx]
+#     y2 = None
+#
+#     if y2Idx:
+#         labels.append(list(data.columns.values)[y2Idx])
+#         y2 = data.ix[:,y2Idx]
+#
+#     if bar:
+#         plotStatsBars(description, labels, x, xLabels, y1, y2)
+#     else:
+#         plotStatsLines(description, labels, x, xLabels, y1, y2)
+#
+# def plotStatsBars(description, labels, x, xLabels, y1, y2):
+#     bar_width = 0.45
+#     preparePlot(description, labels[0], 'Count')
+#
+#     plt.bar(x, y1, bar_width, facecolor='#9999ff', edgecolor='white', label=labels[1])
+#
+#     if type(y2) != type(None):
+#         plt.bar(x+bar_width, y2, bar_width, facecolor='#ff9999', edgecolor='white', label=labels[2])
+#
+#
+#     plt.xticks(np.arange(len(x))+bar_width, xLabels)
+#
+#     #plt.xticks(np.arange(len(data)), xLabels)
+#
+#     #mean_line = ax1.plot(x,[y1.median() for i in x], label='Mean', linestyle='--')
+#     #mean_line = ax1.plot(x,[y2.mean() for i in x], label='Mean2', linestyle=':')
+#
+#     plt.legend(loc='upper center')
+#     plt.tight_layout()
+#     plt.show()
 
 def plotStatsLines(description, labels, x, xLabels, y1, y2):
-    preparePlot(description, labels[0], 'Count')
+    #preparePlot(description, labels[0], 'Count')
 
+    figureAesthetic()
+
+    sns.set_style("darkgrid")
     plt.plot(x,y1, c='r', label=labels[1], linewidth=2)
 
     if type(y2) != type(None):
         plt.plot(x,y2, c='b', label=labels[2], linewidth=2)
 
 
-    plt.yscale('log')
+    #plt.yscale('log')
     plt.xticks(np.arange(len(xLabels)), xLabels)
     plt.legend()
     plt.gcf().autofmt_xdate()
-    plt.tight_layout()
-    plt.show()
-
-def scatterDelayStats(description, labels, x, y):
-    preparePlot(description, labels[0], 'Count')
-
-    plt.scatter(x,y, c='r', label=labels[1])
-    plt.legend()
     plt.show()
 
 def preparePlot(description, xLabel, yLabel):

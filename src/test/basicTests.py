@@ -51,9 +51,9 @@ def init(_):
     #conv = Conversation(filepath)
     #conv.loadMessages(numMsgs, "2014.09.26", "2014.09.30")
     conv.loadMessages(numMsgs)
-    #df = conv.stats._getWordFrequency()
-    #print(df.head())
     testZipfLaw(conv)
+    #conv.stats._getWordFrequency(['year', 'month'])
+    #testZipfLaw(conv)
     return
 
     #sentences = mnlp.sentenceSegmentation(conv.getEntireConvText())
@@ -73,7 +73,7 @@ def init(_):
     #mio.printAllLexicalStats(conv)
 
 def testZipfLaw(conv):
-    _, wCount, _ = conv.stats.getWordCountStats(100)
+    _, wCount, _ = conv.stats.getWordCountStats()
     print(wCount)
 
     (_, occFirst) = wCount[0]
@@ -81,9 +81,8 @@ def testZipfLaw(conv):
         print(word + " " + str(i) + " = " +  str(occFirst/count))
         print(word + " " + str(count) + " = " +  str(occFirst/i))
     words, count = zip(*wCount)
-    x = range(len(words))
 
-    mplot.plotStatsLines("Zip's Law", ['Rank', 'Count', 'Word'], x, words, count, None)
+    mplot.plotZipfLaw(words, count)
     return
 
 def plotDelayByLengthStats(conv):

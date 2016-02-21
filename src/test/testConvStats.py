@@ -8,8 +8,8 @@ class BasicStatsTestCase(unittest.TestCase):
     def getConversation(self, filepath):
         conv = Conversation(filepath)
         conv.loadMessages(0)
-        #conv.stats = ConvStatsDataFrame(conv)
-        conv.stats = ConvStats(conv)
+        conv.stats = ConvStatsDataFrame(conv)
+        #conv.stats = ConvStats(conv)
         return conv
 
     def test_basicLengthStats(self):
@@ -39,6 +39,35 @@ class BasicStatsTestCase(unittest.TestCase):
         self.assertEqual(numEmoticons, 6)
         self.assertEqual(numEmoticonsS1, sender[conv.sender1])
         self.assertEqual(numEmoticonsS2, sender[conv.sender2])
+
+    def test_singleWordCount(self):
+        conv = self.getConversation(mio.getResourcesPath() + "\\unittest\\test_word_count.txt")
+        totalCount, s1Count, s2Count = conv.stats.getWordCountStats(word='hello')
+
+        sender = {'S1': 2, 'S2': 1}
+        self.assertEqual(totalCount, 3)
+        self.assertEqual(s1Count, sender[conv.sender1])
+        self.assertEqual(s2Count, sender[conv.sender2])
+
+    def test_mentionedWordsStats(self):
+        conv = self.getConversation(mio.getResourcesPath() + "\\unittest\\test_word_count.txt")
+        wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2 = conv.stats.getWordsMentioningStats()
+
+        sender = {'S1': {'name', 'fine', 'my', 'hello', 'is', 'sender2', 'xd', ':d'},
+                  'S2': {'name', 'my', 'are', 'how', 'hello', 'is', 'you', 'sender1', 'bye'}}
+        self.assertEqual(wordsSaidByBoth, {'my', 'is', 'are', 'how', 'xd', 'you', 'hello',
+                                           'sender1', ':d', 'bye', 'sender2', 'name', 'fine'})
+        self.assertEqual(wordsSaidJustByS1, sender[conv.sender1])
+        self.assertEqual(wordsSaidJustByS2, sender[conv.sender2])
+
+    def test_lexicalStats(self):
+        conv = self.getConversation(mio.getResourcesPath() + "\\unittest\\test_word_count.txt")
+        tokensCount, vocabularyCount, lexicalRichness = conv.stats.getLexicalStats()
+        print((tokensCount, vocabularyCount, lexicalRichness))
+
+        self.assertEqual(tokensCount, 18)
+        self.assertEqual(vocabularyCount, 17)
+        self.assertEqual(lexicalRichness, vocabularyCount/tokensCount)
 
     #todo test other combinations of S1 and S2
     def test_delayStats(self):

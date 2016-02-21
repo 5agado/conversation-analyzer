@@ -37,11 +37,6 @@ class IConvStats(metaclass=ABCMeta):
     #def generateDataFrameSingleWordCountBy(self, mFun, word):
     #    pass
 
-    @staticmethod
-    @abstractmethod
-    def getWordsCount(messages):
-        pass
-
     @abstractmethod
     def getIntervalStats(self):
         pass

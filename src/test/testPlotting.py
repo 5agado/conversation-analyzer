@@ -2,6 +2,7 @@ import unittest
 from model.conversation import Conversation
 import util.plotting as mplot
 import util.io as mio
+import seaborn as sns
 from util.convStats import ConvStats
 from util.iConvStats import IConvStats
 from util.convStatsDataFrame import ConvStatsDataFrame
@@ -29,17 +30,23 @@ class PlottingTestCase(unittest.TestCase):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
         mplot.plotBasicLengthStats(conv)
 
-    def test_TotalBasicLengthStats(self):
+    def test_totalBasicLengthStats(self):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
         data = conv.stats.generateAgglomeratedStatsByYearAndMonth(IConvStats.STATS_NAME_BASICLENGTH)
-        #data = data[data.sender == 'total']
-        mplot.plotTotalBasicLengthStats(data, '2015')
+        data = data[data.sender == 'total']
+        mplot.plotTotalBasicLengthStats(data)
 
-    def test_hoursStats(self):
+    def test_hourStats(self):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
         data = conv.stats.generateAgglomeratedStatsByHour(IConvStats.STATS_NAME_BASICLENGTH)
         data = data[data.sender != 'total']
-        mplot.plotHoursStats(data)
+        mplot.plotHourStats(data)
+
+    def test_hoursStatsByMonth(self):
+        conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
+        data = conv.stats.generateAgglomeratedStatsByYearMonthHour(IConvStats.STATS_NAME_BASICLENGTH)
+        data = data[data.sender != 'total']
+        mplot.plotHourStatsByYearAndMonth(data, '2015')
 
     def test_monthStats(self):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
@@ -47,7 +54,7 @@ class PlottingTestCase(unittest.TestCase):
         data = data[data.sender != 'total']
         mplot.plotMonthStats(data)
 
-    def test_MsgsLen(self):
+    def test_msgsLen(self):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
         data = conv.stats.generateAgglomeratedStatsByYearMonthDay(IConvStats.STATS_NAME_BASICLENGTH)
 
@@ -58,18 +65,36 @@ class PlottingTestCase(unittest.TestCase):
 
         mplot.plotBasicLengthStatsHeatmap(data)
 
-    def test_RichnessVariation(self):
+    def test_richnessVariation(self):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
         data = conv.stats.generateAgglomeratedStatsByYearAndMonth(IConvStats.STATS_NAME_LEXICAL)
         mplot.plotRichnessVariation(data)
 
-    def test_WordUsage(self):
+    def test_singleWordUsage(self):
         word = "the"
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
         data = conv.stats.generateAgglomeratedStatsByYearMonthDay(IConvStats.STATS_NAME_WORDCOUNT, word=word)
-        data = data[data.sender != 'total']
+        print(data.head())
+        data = data.reset_index()
+        mplot.plotSingleWordUsage(data, word, '2014')
 
-        mplot.plotWordUsage(data, word, '2014')
+    def test_wordUsage(self):
+        words = ['the', 'hello', 'a', 'when']
+        conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
+        data = conv.stats.generateAgglomeratedStatsByHour(IConvStats.STATS_NAME_WORDCOUNT)
+        #data = data.drop(['sender', 'count', 'frequency'], 1)
+        print(data.head())
+        data = data.reset_index()
+        #mplot.plotWordsUsage(data, words, '2014')
+        mplot.plotWordsUsageByHour(data, words, '2014')
+
+    def test_wordFrequency(self):
+        conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
+        df = conv.stats.generateAgglomeratedStatsByHour(IConvStats.STATS_NAME_WORDCOUNT)
+        df = df.reset_index()
+        print(df)
+        sns.violinplot(y="word", x="frequency", hue='sender', data=df.head(10));
+        sns.plt.show()
 
 if __name__ == '__main__':
     unittest.main()

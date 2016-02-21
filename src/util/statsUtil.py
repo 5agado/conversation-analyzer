@@ -2,6 +2,7 @@
 
 import statistics
 import re
+import collections
 import math
 
 def getCentralTendencyValuesFor(measures):
@@ -18,6 +19,10 @@ def getVariationValuesFor(measures):
     stdDeviation = variance**0.5
     #stdDeviation = statistics.pstdev(measures)
     return meanDeviation, variance, stdDeviation
+
+def getWordsCount(text):
+    wordsCount = collections.Counter(getWords(text))
+    return wordsCount
 
 def getWords(text):
     mText = text.lower()

@@ -112,11 +112,11 @@ class ConvStats(IConvStats):
         df['totCount'] = df[self.conversation.sender1 + '_count'] + df[self.conversation.sender2 + '_count']
         return df
 
-    @staticmethod
-    def getWordsCount(messages):
-        text = [m.text.lower() for m in messages]
-        wordsCount = collections.Counter(statsUtil.getWords(' '.join(text)))
-        return wordsCount
+    # @staticmethod
+    # def getWordsCount(messages):
+    #     text = [m.text.lower() for m in messages]
+    #     wordsCount = collections.Counter(statsUtil.getWords(' '.join(text)))
+    #     return wordsCount
 
     def getEmoticonsStats(self):
         numEmoticons = ConvStats._getEmoticonsStats(self.conversation.messages)
