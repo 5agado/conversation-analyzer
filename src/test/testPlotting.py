@@ -26,73 +26,73 @@ class PlottingTestCase(unittest.TestCase):
         #conv.stats = ConvStats(conv)
         return conv
 
-    def test_basicLengthStats(self):
+    def test_basicLengthStatsPie(self):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
-        mplot.plotBasicLengthStats(conv)
+        mplot.plotBasicLengthStatsPie(conv)
 
-    def test_totalBasicLengthStats(self):
+    def test_basicLengthStatsByYearAndMonth(self):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
-        data = conv.stats.generateAgglomeratedStatsByYearAndMonth(IConvStats.STATS_NAME_BASICLENGTH)
-        data = data[data.sender == 'total']
-        mplot.plotTotalBasicLengthStats(data)
-
-    def test_hourStats(self):
-        conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
-        data = conv.stats.generateAgglomeratedStatsByHour(IConvStats.STATS_NAME_BASICLENGTH)
+        data = conv.stats.generateStatsByYearAndMonth(IConvStats.STATS_NAME_BASICLENGTH)
         data = data[data.sender != 'total']
-        mplot.plotHourStats(data)
+        mplot.plotBasicLengthStatsByYearAndMonth(data, ['2015'])
 
-    def test_hoursStatsByMonth(self):
+    def test_singleLengthStatByHour(self):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
-        data = conv.stats.generateAgglomeratedStatsByYearMonthHour(IConvStats.STATS_NAME_BASICLENGTH)
+        data = conv.stats.generateStatsByHour(IConvStats.STATS_NAME_BASICLENGTH)
+        #data = conv.stats.generateStatsByYearAndHour(IConvStats.STATS_NAME_BASICLENGTH)
         data = data[data.sender != 'total']
-        mplot.plotHourStatsByYearAndMonth(data, '2015')
+        mplot.plotSingleBasicLengthStatByHour(data, 'lenMsgs')
+        #mplot.plotSingleBasicLengthStatByYearAndHour(data, 'lenMsgs')
 
-    def test_monthStats(self):
+    def test_basicLengthStatsByMonthAndHourForYear(self):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
-        data = conv.stats.generateAgglomeratedStatsByYearAndMonth(IConvStats.STATS_NAME_BASICLENGTH)
+        data = conv.stats.generateStatsByYearMonthHour(IConvStats.STATS_NAME_BASICLENGTH)
         data = data[data.sender != 'total']
-        mplot.plotMonthStats(data)
+        mplot.plotBasicLengthStatsByMonthAndHourForYear(data, '2015')
 
-    def test_msgsLen(self):
+    def test_singleBasicLengthStatByYearAndMonth(self):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
-        data = conv.stats.generateAgglomeratedStatsByYearMonthDay(IConvStats.STATS_NAME_BASICLENGTH)
+        data = conv.stats.generateStatsByYearAndMonth(IConvStats.STATS_NAME_BASICLENGTH)
+        data = data[data.sender != 'total']
+        mplot.plotSingleBasicLengthStatByYearAndMonth(data, 'lenMsgs')
+
+    def test_singleBasicLengthStatHeatmap(self):
+        conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
+        data = conv.stats.generateStatsByYearMonthDay(IConvStats.STATS_NAME_BASICLENGTH)
 
         data.drop('avgLen', axis=1, inplace=True)
         data.drop('numMsgs', axis=1, inplace=True)
         data = data.loc[data['sender'] == 'total']
         data.drop('sender', axis=1, inplace=True)
 
-        mplot.plotBasicLengthStatsHeatmap(data)
+        mplot.plotSingleBasicLengthStatHeatmap(data, 'lenMsgs', ['2015'])
 
     def test_richnessVariation(self):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
-        data = conv.stats.generateAgglomeratedStatsByYearAndMonth(IConvStats.STATS_NAME_LEXICAL)
+        data = conv.stats.generateStatsByYearAndMonth(IConvStats.STATS_NAME_LEXICAL)
         mplot.plotRichnessVariation(data)
 
     def test_singleWordUsage(self):
         word = "the"
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
-        data = conv.stats.generateAgglomeratedStatsByYearMonthDay(IConvStats.STATS_NAME_WORDCOUNT, word=word)
-        print(data.head())
+        data = conv.stats.generateStatsByYearMonthDay(IConvStats.STATS_NAME_WORDCOUNT, word=word)
         data = data.reset_index()
-        mplot.plotSingleWordUsage(data, word, '2014')
+        mplot.plotSingleWordUsage(data, word, ['2014'])
 
     def test_wordUsage(self):
         words = ['the', 'hello', 'a', 'when']
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
-        data = conv.stats.generateAgglomeratedStatsByHour(IConvStats.STATS_NAME_WORDCOUNT)
+        #data = conv.stats.generateAgglomeratedStatsByHour(IConvStats.STATS_NAME_WORDCOUNT)
+        data = conv.stats.generateStatsByYearMonthDay(IConvStats.STATS_NAME_WORDCOUNT)
         #data = data.drop(['sender', 'count', 'frequency'], 1)
-        print(data.head())
         data = data.reset_index()
-        #mplot.plotWordsUsage(data, words, '2014')
-        mplot.plotWordsUsageByHour(data, words, '2014')
+        mplot.plotWordsUsage(data, words, ['2014'])
+        #mplot.plotWordsUsageByHour(data, words, ['2014'])
 
     def test_wordFrequency(self):
         conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
-        df = conv.stats.generateAgglomeratedStatsByHour(IConvStats.STATS_NAME_WORDCOUNT)
+        df = conv.stats.generateStatsByHour(IConvStats.STATS_NAME_WORDCOUNT)
         df = df.reset_index()
-        print(df)
         sns.violinplot(y="word", x="frequency", hue='sender', data=df.head(10));
         sns.plt.show()
 

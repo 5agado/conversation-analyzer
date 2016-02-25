@@ -2,12 +2,16 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import util.io as mio
 from datetime import datetime, timedelta
+from matplotlib.colors import ListedColormap
 import pandas as pd
+import os
 import numpy as np
 import seaborn as sns
 from model.message import Message
 
-def plotBasicLengthStats(conv):
+SAVE_PLOT = True
+
+def plotBasicLengthStatsPie(conv):
     totalNum, totalLength, avgLegth = conv.stats.getBasicLengthStats()
     totalNumS1, totalLengthS1, avgLegthS1 = conv.stats.getBasicLengthStats(conv.sender1)
     totalNumS2, totalLengthS2, avgLegthS2 = conv.stats.getBasicLengthStats(conv.sender2)
@@ -30,51 +34,166 @@ def plotBasicLengthStats(conv):
     plt.legend([conv.sender1, conv.sender2], loc='lower right')
     plt.show()
 
-def plotTotalBasicLengthStats(data):
+def plotSingleBasicLengthStatByYearAndMonth(data, stat, yearToShow=None):
+    figureAesthetic()
+    def plot(ax, df, count):
+        ax = sns.barplot(x="month", y="lenMsgs", hue="sender", data=df, ax=ax)
+        ax.set(ylabel=stat if count == 1 else '')
+
+    _plotByYear(data, stat, plot, yearToShow)
+
+def plotBasicLengthStatsByYearAndMonth(data, yearsToShow=[]):
     #figureAesthetic()
     sns.set_context("poster")
-    #sns.plt.title('Basic Lenght Stats')
+    #sns.plt.title('Basic Length Stats')
 
-    df = data.set_index(['year', 'month', 'sender'])
+    df = data[data['year'].isin(yearsToShow)]
+    df = df.set_index(['year', 'month', 'sender'])
 
     df = df.stack()
     df = df.reset_index()
-    df.columns.values[3] = 'stats'
-    df.columns.values[4] = 'vals'
-    print(df.head(10))
-    g = sns.FacetGrid(df, col='year', row='stats', margin_titles=True, sharey=False)
-    g.map(sns.barplot, 'month', 'vals', 'sender')
+    df.columns.values[3] = 'stat'
+    df.columns.values[4] = 'val'
+    g = sns.FacetGrid(df, col='year', row='stat', margin_titles=False, sharey=False)
+    g.map(sns.barplot, 'month', 'val', 'sender')
     g.add_legend()
     sns.plt.show()
 
-def plotHourStatsByYearAndMonth(data, yearToShow=[]):
+def plotBasicLengthStatsByMonthAndHourForYear(data, yearToShow):
     #figureAesthetic()
     sns.set_context("poster")
-    #sns.plt.title('Basic Lenght Stats')
+    #sns.plt.title('Basic Length Stats')
 
     grouped = data.groupby('year')
     for year, group in grouped:
         if yearToShow and yearToShow!=year:
             continue
         df = group.drop('year', 1)
-        print(group.head(10))
         df = df.set_index(['hour', 'month', 'sender'])
-        print(df.head(10))
         df = df.stack()
         df = df.reset_index()
-        df.columns.values[3] = 'stats'
-        df.columns.values[4] = 'vals'
-        print(df.head(10))
-        g = sns.FacetGrid(df, col='month', row='stats', margin_titles=True, sharey=False)
-        g.map(sns.barplot, 'hour', 'vals', 'sender')
+        df.columns.values[3] = 'stat'
+        df.columns.values[4] = 'val'
+        g = sns.FacetGrid(df, col='month', row='stat', margin_titles=True, sharey=False)
+        g.map(sns.barplot, 'hour', 'val', 'sender')
         g.add_legend()
     sns.plt.show()
 
-def plotHoursStats(data):
+def plotSingleBasicLengthStatByHour(data, stat):
     figureAesthetic()
-    ax = sns.barplot(x="hour", y="lenMsgs", hue="sender", data=data)
-    ax.set_title("Hour Stats")
+    ax = sns.barplot(x="hour", y=stat, hue="sender", data=data)
+    ax.set(ylabel=stat)
+    #ax.set_title("Hour Stats")
     sns.plt.show()
+
+def plotSingleBasicLengthStatByYearAndHour(data, stat, yearsToShow=[]):
+    figureAesthetic()
+    def plot(ax, df, count):
+        ax = sns.barplot(x="hour", y=stat, hue="sender", data=df, ax=ax)
+        ax.set(ylabel=stat if count == 1 else '')
+
+    _plotByYear(data, stat, plot, yearsToShow)
+
+def plotSingleBasicLengthStatByYearAndMonth(data, stat, yearsToShow=[]):
+    figureAesthetic()
+    def plot(ax, df, count):
+        ax = sns.barplot(x="month", y=stat, hue="sender", data=df, ax=ax)
+        ax.set(ylabel=stat if count == 1 else '')
+
+    _plotByYear(data, stat, plot, yearsToShow)
+
+def plotSingleBasicLengthStatHeatmap(data, stat, yearsToShow=[]):
+    figureAesthetic()
+    def plot(ax, df, count):
+        df = df.pivot('month', 'day', stat)
+        ax = sns.heatmap(df, mask=df.isnull(), ax=ax)
+        ax.set(ylabel=stat if count == 1 else '')
+        #sns.heatmap(df, mask=df.notnull(), cmap=ListedColormap(['red', 'blue']), cbar=False)
+
+    _plotByYear(data, stat, plot, yearsToShow)
+
+def plotSingleWordUsage(data, word, yearsToShow=[]):
+    figureAesthetic()
+    def plot(ax, df, count):
+        ax = sns.boxplot(x="month", y="count", hue="sender", data=df, ax=ax)
+        ax.set(ylabel='lexical richness (%)' if count == 1 else '')
+        #sns.despine(offset=10, trim=True)
+
+    #def plot(ax, df):
+    #    sns.swarmplot(x="month", y="word", hue='sender', data=df, ax=ax)
+
+    _plotByYear(data, 'Word count for ' + word, plot, yearsToShow)
+
+def plotWordsUsageByHour(data, words, yearsToShow=[]):
+    #figureAesthetic()
+
+    data = data[data['word'].isin(words)]
+    #plt.title("Word Count by Hour")
+    #sns.violinplot(x="hour", y="word", hue='sender', scale="count", data=data)
+    #sns.pointplot(x="hour", y="total", hue='word', data=data)
+
+    g = sns.FacetGrid(data, row='word', margin_titles=True, sharey=False, sharex=False)
+    g.map(sns.pointplot, 'hour', 'count', 'sender')
+    g.add_legend()
+    sns.plt.show()
+
+def plotWordsUsage(data, words, yearsToShow=[]):
+    figureAesthetic()
+    def plot(ax, df, count):
+        sns.pointplot(x="month", y="total", hue='word', data=df, ax=ax)
+        #sns.tsplot(data=df, time='month', value='total', condition='word', ax=ax)
+        #df.plot(x='month', y='total', c='word', ax=ax)
+
+    #def plot(ax, df, count):
+    #    sns.violinplot(x='month', y="word", hue='sender', ax=ax, data=df)
+
+
+    #def plot(ax, df):
+    #    g = sns.FacetGrid(df, row='word', margin_titles=True, sharey=True, sharex=True)
+    #    g.map(sns.barplot, 'month', 'count', 'sender')
+    #    g.add_legend()
+
+    # def plot(ax, df):
+    #     df = df.drop('year', 1)
+    #     print(df.head())
+    #     g = sns.PairGrid(df.sort_values("total", ascending=False),
+    #              x_vars=set(df.month.values), y_vars=["words"])
+    #     g.map(sns.stripplot)
+
+    _plotByYear(data[data['word'].isin(words)], 'Word count', plot, yearsToShow)
+
+def plotZipfLaw(words, count):
+    figureAesthetic()
+
+    #plt.figure(1).suptitle("Zip's Law", fontsize=20)
+    ax = plt.subplot(1,2,1)
+    plt.xlabel("word")
+    plt.ylabel("frequency")
+    numWords = 20
+    x = np.arange(numWords)
+    y = count[:numWords]
+    plt.xticks(np.arange(len(x)), words[:numWords])
+    plt.gcf().autofmt_xdate()
+    ax.plot(x, y, c='r', linewidth=2)
+
+    ax = plt.subplot(1,2,2)
+    plt.xlabel("rank (log scale)")
+    plt.ylabel("frequency (log scale)")
+    x = np.arange(len(words))
+    plt.xscale('log')
+    plt.yscale('log')
+    ax.plot(x,count, c='r', linewidth=2)
+
+    plt.show()
+
+def plotRichnessVariation(data, yearToShow=None):
+    figureAesthetic()
+    def plot(ax, df, count):
+        ax = sns.pointplot(data=df, y='lexicalRichness', x='month', hue='sender', ax=ax)
+        ax.set_ylim([0, 1])
+        ax.set(ylabel='lexical richness (%)' if count == 1 else '')
+
+    _plotByYear(data, 'Vocabulary Richness', plot, yearToShow)
 
 def plotDaysWithoutMessages(conv):
     #TODO extract method
@@ -96,117 +215,20 @@ def figureAesthetic():
     sns.set_style("darkgrid")
     sns.plt.grid(True)
 
-def plotMonthStats(data, yearToShow=None):
-    figureAesthetic()
-    def plot(ax, df):
-        sns.barplot(x="month", y="lenMsgs", hue="sender", data=df, ax=ax)
-
-    _plotByYear(data, 'Messages Total Length', plot, yearToShow)
-
-def plotBasicLengthStatsHeatmap(data, yearToShow=None):
-    figureAesthetic()
-    def plot(ax, df):
-        df = df.pivot('month', 'day', 'lenMsgs')
-        sns.heatmap(df, ax=ax)
-
-    _plotByYear(data, 'Messages Total Length', plot, yearToShow)
-
-def plotSingleWordUsage(data, word, yearToShow=None):
-    figureAesthetic()
-    def plot(ax, df):
-        sns.boxplot(x="month", y="count", hue="sender", data=df, ax=ax)
-        sns.despine(offset=10, trim=True)
-
-    #def plot(ax, df):
-    #    sns.violinplot(x="month", y="count", hue='sender', scale="count", data=df, ax=ax)
-
-    _plotByYear(data, 'Word count for ' + word, plot, yearToShow)
-
-def plotWordsUsageByHour(data, words, yearToShow=None):
-    #figureAesthetic()
-
-    data = data[data['word'].isin(words)]
-    print(data.sort(['word', 'hour']))
-    #plt.title("Word Count by Hour")
-    #sns.violinplot(x="hour", y="word", hue='sender', scale="count", data=data)
-    #sns.pointplot(x="hour", y="total", hue='word', data=data)
-
-    g = sns.FacetGrid(data, row='word', margin_titles=True, sharey=False, sharex=False)
-    g.map(sns.pointplot, 'hour', 'count', 'sender')
-    g.add_legend()
-    sns.plt.show()
-
-def plotWordsUsage(data, words, yearToShow=None):
-    figureAesthetic()
-    def plot(ax, df):
-        print(df)
-        #sns.pointplot(x="month", y="total", hue='word', data=df, ax=ax)
-        #sns.tsplot(data=df, time='month', value='total', condition='word', ax=ax)
-        df.plot(x='month', y='total', c='word', ax=ax)
-
-    def plot(ax, df):
-        g = sns.FacetGrid(df, row='word', margin_titles=True, sharey=True, sharex=True)
-        g.map(sns.barplot, 'month', 'count', 'sender')
-        g.add_legend()
-
-    # def plot(ax, df):
-    #     df = df.drop('year', 1)
-    #     print(df.head())
-    #     g = sns.PairGrid(df.sort_values("total", ascending=False),
-    #              x_vars=set(df.month.values), y_vars=["words"])
-    #     g.map(sns.stripplot)
-
-    _plotByYear(data[data['word'].isin(words)], 'Word count', plot, yearToShow)
-
-def plotZipfLaw(words, count):
-    figureAesthetic()
-    plt.title("Zip's Law")
-
-    sns.set_style("darkgrid")
-
-    plt.figure(1)
-    ax = plt.subplot(1,2,1)
-    plt.xlabel("Word")
-    plt.ylabel("Count")
-    numWords = 20
-    x = np.arange(numWords)
-    y = count[:numWords]
-    plt.xticks(np.arange(len(x)), words[:numWords])
-    plt.gcf().autofmt_xdate()
-    ax.plot(x, y, c='r', linewidth=2)
-
-    ax = plt.subplot(1,2,2)
-    plt.xlabel("log(rank)")
-    plt.ylabel("log(count)")
-    x = np.arange(len(words))
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.legend()
-    ax.plot(x,count, c='r', linewidth=2)
-
-    plt.show()
-
-def plotRichnessVariation(data, yearToShow=None):
-    figureAesthetic()
-    def plot(ax, df):
-        ax.set_ylim([0, 1])
-        sns.pointplot(data=df, y='lexicalRichness', x='month', hue='sender', ax=ax)
-
-    _plotByYear(data, 'Vocabulary Richness', plot, yearToShow)
-
-def _plotByYear(data, title, plotFun, yearToShow=None):
+def _plotByYear(data, title, plotFun, yearsToShow=[]):
     plt.title(title)
     grouped = data.groupby('year')
-    numberOfYears = len(grouped) if yearToShow==None else 1
+    numberOfYears = len(grouped) if not yearsToShow else len(yearsToShow)
     count = 1
-    plt.figure(1)
+    fig = plt.figure(1)
     for year, group in grouped:
-        if yearToShow and yearToShow!=year:
+        if yearsToShow and year not in yearsToShow:
             continue
         ax = plt.subplot(1,numberOfYears,count)
         ax.set_title(year)
-        plotFun(ax, group)
+        plotFun(ax, group, count)
         count += 1
+    savePlotAsImage(fig, "image.png")
     sns.plt.show()
 
 #TODO consider using directly plotHoursStats(data):
@@ -288,3 +310,10 @@ def preparePlot(description, xLabel, yLabel):
     plt.title(description)
     plt.xlabel(xLabel)
     plt.ylabel(yLabel)
+
+def savePlotAsImage(plot, filename):
+    if SAVE_PLOT:
+        filepath = os.path.join( mio.getResourcesPath(), 'imgs\\'+filename)
+        plot.savefig(filepath)
+    else:
+        pass

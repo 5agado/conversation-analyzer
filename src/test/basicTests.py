@@ -51,7 +51,8 @@ def init(_):
     #conv = Conversation(filepath)
     #conv.loadMessages(numMsgs, "2014.09.26", "2014.09.30")
     conv.loadMessages(numMsgs)
-    testZipfLaw(conv)
+    print(conv.stats.generateStats(IConvStats.STATS_NAME_WORDCOUNT))
+    #testZipfLaw(conv)
     #conv.stats._getWordFrequency(['year', 'month'])
     #testZipfLaw(conv)
     return

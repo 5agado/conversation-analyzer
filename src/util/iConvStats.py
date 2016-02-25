@@ -22,20 +22,12 @@ class IConvStats(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def generateDataFrameAgglomeratedStatsByHour(self):
-        pass
-
-    @abstractmethod
     def getEmoticonsStats(self):
         pass
 
     @abstractmethod
     def getLexicalStats(self, sender=None):
         pass
-
-    #@abstractmethod
-    #def generateDataFrameSingleWordCountBy(self, mFun, word):
-    #    pass
 
     @abstractmethod
     def getIntervalStats(self):
