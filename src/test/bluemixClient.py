@@ -1,6 +1,7 @@
-import requests
 import logging
-import sys
+
+import requests
+
 
 class BluemixClient:
     def __init__(self, username, password, serviceUrl, useToken=False):

@@ -1,11 +1,11 @@
-from model.message import Message
 import logging
-from datetime import datetime
 import os
-import pandas as pd
+from datetime import datetime
+
 from pandas import read_csv
-import numpy as np
-from collections import OrderedDict
+
+from model.message import Message
+
 
 def parseMessagesFromFile(filePath, limit=0, startDate=None, endDate=None):
     messages = []
@@ -58,7 +58,7 @@ def printBasicLengthStats(basicLengthStatsDf):
     for sender, vals in basicLengthStatsDf.iterrows():
         totalNum, totalLength, avgLegth = vals.tolist()
         logging.info("#" + sender)
-        logging.info("Total number of messages: {}".format(totalNum))
+        logging.info("Number of messages: {}".format(totalNum))
         logging.info("Total length: {}".format(totalLength))
         logging.info("Average length: {0:.2f}".format(avgLegth))
 
@@ -78,8 +78,8 @@ def printLexicalStats(lexicalStatsDf):
 
 def printIntervalStatsFor(start, end, interval, days):
     logging.info("##Conv Interval")
-    logging.info("Conversation started: {}".format(start))
-    logging.info("Conversation ended: {}".format(end))
+    logging.info("Conversation started: {}".format(str(start)))
+    logging.info("Conversation ended: {}".format(str(end)))
     logging.info("Conversation overall duration: {}".format(interval))
 
     logging.info("{} days without messages".format(len(days)))
@@ -89,13 +89,31 @@ def printIntervalStatsFor(start, end, interval, days):
 
     logging.info('-'*10)
 
-def printWordsMentioningToFile(conv):
-    wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2 = conv.stats.getWordsMentioningStats()
-    printListToFile(wordsSaidByBoth, conv.statsFolder + "\wordsSaidByBoth.txt", "#Words said by both")
-    printListToFile(wordsSaidJustByS1, conv.statsFolder + "\\wordsSaidJustBy" + conv.sender1 + ".txt",
-                    "#Words said just by " + conv.sender1)
-    printListToFile(wordsSaidJustByS2, conv.statsFolder + "\\wordsSaidJustBy" + conv.sender2 + ".txt",
-                    "#Words said just by " + conv.sender2)
+def printEmoticonsStats(emoticonsStatsDf):
+    logging.info("##EMOTICONS STATS")
+
+    for sender, vals in emoticonsStatsDf.iterrows():
+        numEmoticons, emoticonsRatio, lenMsgs = vals.tolist()
+        logging.info("#" + sender)
+        logging.info("Emoticons count: {}".format(numEmoticons))
+        logging.info("Messages total length: {}".format(lenMsgs))
+        logging.info("Ratio: {0:.5f}".format(emoticonsRatio))
+
+    logging.info('-'*10)
+
+def printWordsBySender(conv):
+    data = conv.stats.getWordsBySender()
+    for sender in conv.senders:
+        words = data[sender]
+        printListToFile(words, conv.statsFolder + "\\wordsUsedBy" + sender + ".txt",
+                    "#Words by Relevance")
+
+def printWordsUsedJustByToFile(conv):
+    data = conv.stats.getWordsBySender(usedJustBy=True)
+    for sender in conv.senders:
+        wordsSaidJustBySender = data[sender]
+        printListToFile(wordsSaidJustBySender, conv.statsFolder + "\\wordsSaidJustBy" + sender + ".txt",
+                    "#Words said just by " + sender)
 
 def printDelayStatsFor(conv):
     delay = conv.stats.getDelayStats()

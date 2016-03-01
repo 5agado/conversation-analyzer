@@ -1,14 +1,15 @@
-import util.io as mio
-import numpy as np
 import logging
-import pandas as pd
-import time
-from util.convStats import ConvStats
-from util.convStatsDataFrame import ConvStatsDataFrame
 import os
-import nltk
-import sys
+import time
 
+import nltk
+
+import util.io as mio
+from stats.convStats import ConvStats
+
+#----------------------------#
+#         DEPRECATED         #
+#----------------------------#
 class Conversation:
     def __init__(self, filepath):
         self.sender1 = None
@@ -39,8 +40,7 @@ class Conversation:
         end = time.time()
         logging.info("Loading completed in {0:.2f}s".format(end-start))
 
-        #TODO
-        self.stats = ConvStatsDataFrame(self)
+        self.stats = ConvStats
 
     def getAsNLTKText(self, sender=None):
         if sender:

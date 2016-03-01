@@ -1,0 +1,5 @@
+2014.01.01 00:00:00 S1 Hello My name is Sender1
+2014.01.03 12:27:50 S2 Hello My name is Sender2 xd
+2014.01.04 06:00:57 S1 Hello! How are you? I'm working in a company.. I'm searching for a marketing expert
+2014.01.05 06:00:59 S2 One, Two, Three, Four;
+2014.01.07 00:10:00 S2 Five :d

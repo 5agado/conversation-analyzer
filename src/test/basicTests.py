@@ -1,26 +1,19 @@
 #from model.conversation import Conversation
-from datetime import datetime, timedelta
-import collections
-import re
-from util import io as mio
 import argparse
-import queue as Q
-from util import conversationGenerator
-from util.iConvStats import IConvStats
-from datetime import datetime
-from model.message import Message
-from util import plotting as mplot
-import sys
-import pandas as pd
-import configparser
-from model.conversation import Conversation
-import util.nlp as mnlp
 import logging
-from matplotlib import pyplot as plt
 import os
-from scipy.stats.stats import pearsonr
+import sys
+
 import numpy as np
-import nltk
+from matplotlib import pyplot as plt
+from scipy.stats.stats import pearsonr
+
+from model.conversationDataframe import ConversationDataframe
+from util import conversationGenerator
+from util import io as mio
+from util import plotting as mplot
+
+
 #from sklearn import datasets, linear_model
 
 def initLogger():
@@ -47,31 +40,22 @@ def init(_):
     wCountLimit = args.wCountLimit
 
     initLogger()
-    conv = Conversation(mio.getResourcesPath() + "\\unittest\\test_plotting.txt")
+    #conv = Conversation(mio.getResourcesPath() + "\\unittest\\test_plotting.txt")
+    conv = ConversationDataframe(mio.getResourcesPath() + "\\unittest\\test_plotting.txt")
     #conv = Conversation(filepath)
-    #conv.loadMessages(numMsgs, "2014.09.26", "2014.09.30")
     conv.loadMessages(numMsgs)
-    print(conv.stats.generateStats(IConvStats.STATS_NAME_WORDCOUNT))
-    #testZipfLaw(conv)
-    #conv.stats._getWordFrequency(['year', 'month'])
-    #testZipfLaw(conv)
+    mio.printWordsUsedJustByToFile(conv)
     return
 
     #sentences = mnlp.sentenceSegmentation(conv.getEntireConvText())
     #sentences = mnlp.wordTokenization(conv.getEntireConvText())
     #for s in sentences:
     #    print(s)
-    #mio.printAgglomeratedStatsToFile(lambda m: m.getHour(), 'Hours', conv)
-    #mio.printAgglomeratedStatsToFile(lambda m: m.date, 'Day', conv)
-    #mio.printAgglomeratedStatsToFile(lambda m: m.getMonth(), 'Month', conv)
-    #mplot.plotDaysWithoutMessages(conv)
-    #mplot.plotBasicLengthStats(conv)
     #rawText = conv.getEntireConvText()
     #mio.displayDispersionPlot(conv, ['sender1', ':D', 'well'])
     #mio.showConcordance(conv, "phone")
     #tokens = nltk.word_tokenize(rawText)
     #words = [w.lower() for w in tokens]
-    #mio.printAllLexicalStats(conv)
 
 def testZipfLaw(conv):
     _, wCount, _ = conv.stats.getWordCountStats()

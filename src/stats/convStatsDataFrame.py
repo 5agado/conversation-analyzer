@@ -1,26 +1,18 @@
-from util.iConvStats import IConvStats
-import pandas as pd
+import collections
+import math
+
 import numpy as np
+import pandas as pd
+
 from model.message import Message
-from datetime import datetime, timedelta
+from stats.iConvStats import IConvStats
 from util import statsUtil
 
-class ConvStatsDataFrame(IConvStats):
+
+class ConvStatsDataframe(IConvStats):
     def __init__(self, conversation):
         super().__init__(conversation)
-        self.df = self._getConversationAsDataframe()
-
-    def _getConversationAsDataframe(self):
-        if len(self.conversation.messages) == 0:
-            raise Exception("No messages found for conversation " + self.filepath)
-
-        msgs = []
-        for msg in self.conversation.messages:
-            year, month, day = str.split(msg.date, '.')
-            hour = str.split(msg.time, ':')[0]
-            msgs.append([year, month, day, msg.date, hour, msg.time, msg.sender, msg.text])
-        df = pd.DataFrame(msgs, columns=['year', 'month', 'day', 'date', 'hour', 'time', 'sender', 'text'])
-        return df
+        self.df = self.conversation.messages
 
     def getMessagesTotalLength(self):
         msgsLen = self.df['text'].apply(lambda x: len(x))
@@ -50,11 +42,15 @@ class ConvStatsDataFrame(IConvStats):
 
     def _generateStats(self, statsType, groupByColumns=[], **kwargs):
         if statsType == IConvStats.STATS_NAME_BASICLENGTH:
-            res = self._generateBasicLengthStatsBy(groupByColumns)
-        if statsType == IConvStats.STATS_NAME_LEXICAL:
-            res = self._generateLexicalStatsBy(groupByColumns)
-        if statsType == IConvStats.STATS_NAME_WORDCOUNT:
+            res = self._generateBasicLengthStatsBy(groupByColumns, **kwargs)
+        elif statsType == IConvStats.STATS_NAME_LEXICAL:
+            res = self._generateLexicalStatsBy(groupByColumns, **kwargs)
+        elif statsType == IConvStats.STATS_NAME_WORDCOUNT:
             res = self._generateWordCountStatsBy(groupByColumns, **kwargs)
+        elif statsType == IConvStats.STATS_NAME_EMOTICONS:
+            res = self._generateEmoticonsStatsBy(groupByColumns, **kwargs)
+        else:
+            raise Exception(statsType + 'Stat not implemented')
         return res
 
     def _generateBasicLengthStatsBy(self, groupByColumns=[]):
@@ -96,14 +92,19 @@ class ConvStatsDataFrame(IConvStats):
 
         results = pd.concat(groupDfs)
         results['total'] = results['count']
-        tmp = results.groupby(['word']+groupByColumns, as_index=True).agg({'total' : 'sum'})
+        results['usageCount'] = results['sender']
+        tmp = results.groupby(['word']+groupByColumns, as_index=True).agg({'total' : 'sum',
+                                                                           'usageCount' : lambda x : x.nunique()})
         results.set_index(['word']+groupByColumns, inplace=True)
         results['total'] = tmp['total']
+        results['usageCount'] = tmp['usageCount']
         results['frequency'] = results['count']/results['total']
+        results['inverseSenderFrequency'] = (results['sender'].nunique()/results['usageCount']).apply(math.log)
+        results['tf-isf'] = results['frequency']*results['inverseSenderFrequency']
         #results.set_index(['word', 'sender']+groupByColumns, inplace=True)
+        results.drop('usageCount', axis=1, inplace=True)
         return results
 
-    #TODO ??option of just reuse wordCount df ??
     def _generateLexicalStatsBy(self, groupByColumns=[]):
         res = self.df.rename(columns={'text':'text'})
         #TODO make it quicker. No need to clean words or check emoticons, lower case should be
@@ -129,31 +130,28 @@ class ConvStatsDataFrame(IConvStats):
 
     def _generateEmoticonsStatsBy(self, groupByColumns=[]):
         res = self.df.rename(columns={'text':'text'})
-        grouped = res.groupby(['sender'] + groupByColumns, as_index=False)
-        res['numEmoticons'] = grouped['text'].apply(lambda x: len(x))
-        res['lenMsgs'] = grouped['text'].apply(lambda x: statsUtil.getEmoticonsFromText(x))
+        #grouped = res.groupby(['sender'] + groupByColumns, as_index=False)
+        res = res.groupby(['sender'] + groupByColumns, as_index=False).agg({'text' : lambda x: " ".join(x)})
+        res['lenMsgs'] = res['text'].apply(lambda x: len(x))
+        res['numEmoticons'] = res['text'].apply(lambda x: len(statsUtil.getEmoticonsFromText(x)))
 
         res.drop('text', axis=1, inplace=True)
-
         if groupByColumns:
             tot = res.groupby(groupByColumns, as_index=False).sum()
             tot['sender'] = "total"
             res = pd.concat([res, tot])
             res['emoticonsRatio'] = res['numEmoticons']/res['lenMsgs']
-            return res
+            return res[['numEmoticons', 'emoticonsRatio', 'lenMsgs']]
         else:
             res.set_index(['sender'], inplace=True)
             res.loc['total'] = res.sum()
             res['emoticonsRatio'] = res['numEmoticons']/res['lenMsgs']
-            return res
+            return res[['numEmoticons', 'emoticonsRatio', 'lenMsgs']]
 
-    @staticmethod
     def _getIntervalStatsFor(self):
-        startDatetime = ' '.join(self.df.iloc[0][['date','time']].values)
-        endDatetime = ' '.join(self.df.iloc[-1][['date','time']].values)
-        start = datetime.strptime(startDatetime, Message.DATE_TIME_FORMAT)
-        end = datetime.strptime(endDatetime, Message.DATE_TIME_FORMAT)
-        interval = end - start
+        startDatetime = self.df.iloc[0]['datetime']
+        endDatetime = self.df.iloc[-1]['datetime']
+        interval = self.df.iloc[-1]['datetime'] - self.df.iloc[0]['datetime']
 
         return startDatetime, endDatetime, interval
 
@@ -186,35 +184,27 @@ class ConvStatsDataFrame(IConvStats):
 
     def getLexicalStats(self, sender=None):
         lexicalStatsDf = self.generateStats(IConvStats.STATS_NAME_LEXICAL)
-        print(lexicalStatsDf)
         if not sender:
             tokensCount, vocabularyCount, lexicalRichness = lexicalStatsDf.loc['total'].tolist()
         else:
             tokensCount, vocabularyCount, lexicalRichness = lexicalStatsDf.loc[sender].tolist()
         return tokensCount, vocabularyCount, lexicalRichness
 
-    def getWordCountStats(self, limit=0, word=None):
-        def extractWordCount(df, sender, limit):
-            wCount = df[df['sender']==sender]
-            #print(wCount)
-            if word:
-                val = wCount['count'].values
-                return 0 if not val else val[0]
-            else:
-                if limit != 0:
-                    return [(w, row[0]) for w, row in wCount.iterrows()][:limit]
-                else:
-                    return [(w, row[0]) for w, row in wCount.iterrows()]
-
-        if word:
-            wordsCountStatsDf = self.generateStats(IConvStats.STATS_NAME_WORDCOUNT, word=word)
+    def getWordCountStats(self, sender=None, limit=0, word=None):
+        wordsCountStatsDf = self.generateStats(IConvStats.STATS_NAME_WORDCOUNT, word=word)
+        if sender:
+            wCount = wordsCountStatsDf[wordsCountStatsDf['sender']==sender]
         else:
-            wordsCountStatsDf = self.generateStats(IConvStats.STATS_NAME_WORDCOUNT)
-        wCountS1 = extractWordCount(wordsCountStatsDf, self.conversation.sender1, limit)
-        wCountS2 = extractWordCount(wordsCountStatsDf, self.conversation.sender2, limit)
-        wCount = wCountS1 + wCountS2
-
-        return wCount, wCountS1, wCountS2
+            wCount = pd.DataFrame(wordsCountStatsDf['total']).drop_duplicates(take_last=True)
+        if word:
+            val = wCount['count' if sender else 'total'].values
+            return 0 if not val else val[0]
+        else:
+            if limit != 0:
+                return [(w, row[0]) for w, row in wCount.iterrows()][:limit]
+            else:
+                return [(w, row[0]) for w, row in wCount.iterrows()]
+        return  wCount
 
     def getEmoticonsStats(self, sender=None):
         emoticonStatsDf = self.generateStats(IConvStats.STATS_NAME_EMOTICONS)
@@ -224,6 +214,25 @@ class ConvStatsDataFrame(IConvStats):
             numEmoticons, emoticonsRatio, lenMsgs = emoticonStatsDf.loc[sender].tolist()
         return  numEmoticons, emoticonsRatio, lenMsgs
 
+    def getWordsBySender(self, limit=0, usedJustBy=False):
+        df = self.generateStats(IConvStats.STATS_NAME_WORDCOUNT)
+        df = df.reset_index()
+        grouped = df.groupby(['sender'])
+        words = collections.defaultdict(list)
+
+        for sender, group in grouped:
+            group = group.sort_values("tf-isf", ascending=False)
+            if usedJustBy:
+                #Select words said by sender, but not by the others.
+                #For such case, sender count should be equal to total count
+                words[sender] = set(group[
+                                        (group['sender']==sender) & (group['count']==group['total'])
+                                    ]['word'].values)
+            else:
+                words[sender] = [tuple(x) for x in group[group['sender']==sender][['word','tf-isf']].values]
+
+        return words
+
     def getIntervalStats(self):
         start, end, interval = self._getIntervalStatsFor()
         return start, end, interval
@@ -231,12 +240,3 @@ class ConvStatsDataFrame(IConvStats):
     def getDaysWithoutMessages(self):
         days = self._getDaysWithoutMessages()
         return days
-
-    #TODO rename
-    def getWordsMentioningStats(self):
-        df = self.generateStats(IConvStats.STATS_NAME_WORDCOUNT)
-        df = df.reset_index()
-        wordsSaidByBoth = set(df['word'].values)
-        wordsSaidJustByS1 = set(df[df['sender']==self.conversation.sender2]['word'].values)
-        wordsSaidJustByS2 = set(df[df['sender']==self.conversation.sender1]['word'].values)
-        return wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2

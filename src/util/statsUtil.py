@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import statistics
-import re
 import collections
 import math
+import re
+import statistics
+
 
 def getCentralTendencyValuesFor(measures):
     mean = measures.mean()

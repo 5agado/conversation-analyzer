@@ -1,38 +1,17 @@
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import util.io as mio
-from datetime import datetime, timedelta
-from matplotlib.colors import ListedColormap
-import pandas as pd
 import os
+from datetime import datetime
+
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
+
+import util.io as mio
 from model.message import Message
 
 SAVE_PLOT = True
 
-def plotBasicLengthStatsPie(conv):
-    totalNum, totalLength, avgLegth = conv.stats.getBasicLengthStats()
-    totalNumS1, totalLengthS1, avgLegthS1 = conv.stats.getBasicLengthStats(conv.sender1)
-    totalNumS2, totalLengthS2, avgLegthS2 = conv.stats.getBasicLengthStats(conv.sender2)
-
-    colors = [(152/255,233/255,138/255), (197/255,176/255,213/255)]
-
-    plt.figure(1)
-    plt.subplot(121)
-    plt.title('Number of Messages')
-    sizes = [totalNumS1/totalNum, totalNumS2/totalNum]
-    plt.pie(sizes, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
-    plt.axis('equal')
-
-    plt.subplot(122)
-    plt.title('Messages Total Length')
-    sizes = [totalLengthS1/totalLength, totalLengthS2/totalLength]
-    plt.pie(sizes, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
-    plt.axis('equal')
-
-    plt.legend([conv.sender1, conv.sender2], loc='lower right')
-    plt.show()
+#TODO use K for diagrams, vertical lines separate between senders
 
 def plotSingleBasicLengthStatByYearAndMonth(data, stat, yearToShow=None):
     figureAesthetic()
@@ -195,8 +174,8 @@ def plotRichnessVariation(data, yearToShow=None):
 
     _plotByYear(data, 'Vocabulary Richness', plot, yearToShow)
 
+#TODO refactor
 def plotDaysWithoutMessages(conv):
-    #TODO extract method
     start = datetime.strptime(conv.messages[0].date, Message.DATE_FORMAT).date()
     end = datetime.strptime(conv.messages[-1].date, Message.DATE_FORMAT).date()
     datelist = pd.date_range(start, end).tolist()
@@ -287,6 +266,29 @@ def _plotByYear(data, title, plotFun, yearsToShow=[]):
 #     plt.legend(loc='upper center')
 #     plt.tight_layout()
 #     plt.show()
+#
+# def plotBasicLengthStatsPie(conv):
+#     totalNum, totalLength, avgLegth = conv.stats.getBasicLengthStats()
+#     totalNumS1, totalLengthS1, avgLegthS1 = conv.stats.getBasicLengthStats(conv.sender1)
+#     totalNumS2, totalLengthS2, avgLegthS2 = conv.stats.getBasicLengthStats(conv.sender2)
+#
+#     colors = [(152/255,233/255,138/255), (197/255,176/255,213/255)]
+#
+#     plt.figure(1)
+#     plt.subplot(121)
+#     plt.title('Number of Messages')
+#     sizes = [totalNumS1/totalNum, totalNumS2/totalNum]
+#     plt.pie(sizes, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
+#     plt.axis('equal')
+#
+#     plt.subplot(122)
+#     plt.title('Messages Total Length')
+#     sizes = [totalLengthS1/totalLength, totalLengthS2/totalLength]
+#     plt.pie(sizes, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
+#     plt.axis('equal')
+#
+#     plt.legend([conv.sender1, conv.sender2], loc='lower right')
+#     plt.show()
 
 def plotStatsLines(description, labels, x, xLabels, y1, y2):
     #preparePlot(description, labels[0], 'Count')
@@ -312,8 +314,11 @@ def preparePlot(description, xLabel, yLabel):
     plt.ylabel(yLabel)
 
 def savePlotAsImage(plot, filename):
+    folderPath = os.path.join(mio.getResourcesPath(), 'imgs')
+    if not os.path.exists(folderPath):
+        os.makedirs(folderPath)
     if SAVE_PLOT:
-        filepath = os.path.join( mio.getResourcesPath(), 'imgs\\'+filename)
+        filepath = os.path.join(folderPath, filename)
         plot.savefig(filepath)
     else:
         pass

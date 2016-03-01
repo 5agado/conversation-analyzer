@@ -1,8 +1,9 @@
+import argparse
 import json
-import time
 import logging
 import sys
-import argparse
+import time
+
 
 def parseMessage(msgData, authors):
     """Parse the message contained in msgData.

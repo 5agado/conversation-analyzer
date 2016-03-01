@@ -1,5 +1,5 @@
 # Conversation Analyzer
-Analyzer and statistics generator for text-based conversations.
+Analyzer and statistics generator for text-based conversations. If interested, check out also [my related article].
 
 Includes scraper and parser for Facebook conversations. 
 
@@ -13,14 +13,17 @@ Conversation format example (based on the current parser):
 
 ##Usage
 Each of the three components (i.e. scraper, parser, analyzer) can be accessed separately. 
-The analyzer can be accessed via the main.py script contained in the *src* folder.
+The analyzer can be accessed via the main.py script contained in the *src* folder. It will log a set of basic stats for the overall conversation.
 Scraper and parser are instead inside the *util* folder. 
 
 For each see the help menu (-h or --help) for a detailed usage description.
 
-Basic configurations for the analyzer can be managed via the *config.ini* file.  
+Basic configurations for all modules can be managed via the *config.ini* file. The location of the config file to be used should be passed via *--config* argument.   
 
-###Scraper
+###Requirements
+The only additional requirement for parser and scraper is the *requests* package. For the analyzer I used Conda; *requirements.txt* is the exported environment file. See [here](http://conda.pydata.org/docs/using/envs.html#share-an-environment) for a guide on how to manage Conda environments.
+
+##Scraper
 In order to access Facebook conversations the following parameters are required: *cookie* and *fb_dtsg* and conversation ID. The ID of a conversation [not a group one] corresponds to the ID of the other participant.
 
 Such data can be found via the following procedure:
@@ -32,11 +35,32 @@ Such data can be found via the following procedure:
 
 Once the values of *cookie* and *fb_dtsg* have been copied in the *config.ini* file, the scraper can be run by passing the conversation ID as argument (--id). Via the *-m* flag new messages can be merged with the previously scraped part of the same conversation, if present.
 
-###Parser
+##Parser
 To run the parser just provide as arguments the path of the scraped-conversation file and the desired path for the parsed output.
 Additionally you can pass via *--authors* a dictionary like structure to provide a correspondence between the profile IDs and eventually preferred aliases. This might make the parsed output more readable. Example usage:
 
     --authors "{"11234":"SENDER_1", "112345":"SENDER_2"}"
+
+##Analyzer
+**The analyzer is still a work in progress.**
+
+*main.py* requires as parameter the filepath of the conversation to be analyzed; it will then log and generate a set of basic stats for the overall conversation. 
+
+Related classes are in the *stats* folder. The suggested and maintained class to use is *convStatsDataframe*, that makes use of Pandas *Dataframe* for the stats generation. In the *test* package you can find unittests and example files that generate or plot different kind of statistics.
+
+* **Conv Interval** (start date, end date, duration, days without messages)
+
+* **Basic length stats** (number of messages, total length of messages, message average length)  
+
+* **Lexical Stats** (tokens count and vocabulary, lexical diversity)  
+
+* **Word Count/Frequency** (top N words, word count, words said just by, tf-idf, relevant words by sender, zipf's law)  
+
+* **Emoticons Stats** (number of emoticons, emoticon ratio)  
+
+* **Reply Delay** (reply delay by sender, reply delay by message length, num of sequential messages by sender)  
+
+* **Aggregation**: most of the previous groups include the option of aggregation by sender, or by datetime features (e.g. hour, day, month, year) where relevant
 
 ##TODO
     * Generalize for group conversations (all three components)
@@ -44,61 +68,11 @@ Additionally you can pass via *--authors* a dictionary like structure to provide
         ** consider checking emotion related to emoticon
         ** words category/sentiment (for example for word count)
     * different-conversations comparison
-
-##Stats
-###Conv Interval
-Conversation start date  
-Conversation end date  
-Conversation duration
-Days without messages
-
-###Basic length stats
-Total number of messages  
-Total length of messages   
-Message average length  
-(all previous) by sender  
-
-###Agglomeration Stats
-(all previous) by hour  
-(all previous) by day  
-(all previous) by day of week  
-(all previous) by month  
-(all previous) by year
-
-###Words Count (??Should be words occurrences)
-Words count   
-Best words count    
-Word occurrences by messages agglomeration    
-(all previous) by sender  
-  
-###Lexical Stats
-Tokens count  
-Distinct tokens count  
-Lexical diversity  
-(all previous) by sender  
-
-###Words Mentioning
-Words said by all senders  
-Words said by one sender but not by the others  
-
-###Reply Delay
-Reply delay by sender (conversation with two senders)  
-Reply delay by message length
-
-###Sequential Messages
-Num of sequential messages by sender   
-Delay between sequential messages by sender  
-
-###Emoticons Stats
-Total number of emoticons  
-Total number of emoticons per sender  
-
-(all previous) by hour  
-(all previous) by day  
-(all previous) by month  
+    * provide command line for stats generation (not feasible via config file)
 
 ## License
 
 Released under version 2.0 of the [Apache License].
 
 [Apache license]: http://www.apache.org/licenses/LICENSE-2.0
+[my related article]: https://medium.com/@5agado/conversation-analyzer-baa80c566d7b#.w20u1gltf

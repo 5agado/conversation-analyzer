@@ -1,18 +1,16 @@
-# -*- coding: utf-8 -*-
-
+import collections
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
-import collections
-import numpy as np
-import pandas as pd
+
 from model.message import Message
-from util import statsUtil
+
 
 class IConvStats(metaclass=ABCMeta):
     STATS_NAME_BASICLENGTH = 'basicLengthStats'
     STATS_NAME_LEXICAL = 'lexicalStats'
     STATS_NAME_WORDCOUNT = 'wordCountStats'
     STATS_NAME_EMOTICONS = 'emoticonsStats'
+    STATS_NAME_DELAY = 'emoticonsStats'
 
     def __init__(self, conversation):
         self.conversation = conversation
@@ -37,9 +35,17 @@ class IConvStats(metaclass=ABCMeta):
     def getDaysWithoutMessages(self):
         pass
 
+    #@abstractmethod
+    #def getWordsUsedJustByStats(self):
+    #    pass
+
+
+    #TODO Implement following methods for dataframe
+
     def getDelayStats(self):
-        delay = IConvStats._getDelayStatsFor(self.conversation.messages)
-        return delay
+        pass
+        #delay = IConvStats._getDelayStatsFor(self.conversation.messages)
+        #return delay
 
     @staticmethod
     def _getDelayStatsFor(messages):
@@ -64,8 +70,9 @@ class IConvStats(metaclass=ABCMeta):
         return senderDelay
 
     def getDelayStatsByLength(self):
-        delay, senderDelay = IConvStats._getDelayStatsByLength(self.conversation.messages)
-        return delay, senderDelay
+        #delay, senderDelay = IConvStats._getDelayStatsByLength(self.conversation.messages)
+        #return delay, senderDelay
+        pass
 
     @staticmethod
     def _getDelayStatsByLength(messages):
@@ -106,7 +113,3 @@ class IConvStats(metaclass=ABCMeta):
             prevDatetime = currentDatetime
 
         return numOfSeqMsgs, senderDelay
-
-    @abstractmethod
-    def getWordsMentioningStats(self):
-        pass

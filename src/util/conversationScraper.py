@@ -1,11 +1,13 @@
-import os
+import argparse
+import configparser
 import json
+import logging
+import os
 import sys
 import time
-import argparse
+
 import requests
-import configparser
-import logging
+
 
 class ConversationScraper:
     """Scraper that retrieves, manipulates and stores all messages belonging to a specific Faceboo conversation"""

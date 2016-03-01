@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 
+import collections
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
-import collections
-from model.message import Message
-from datetime import datetime, timedelta
-from util import statsUtil
-from util.iConvStats import IConvStats
 
+from model.message import Message
+from stats.iConvStats import IConvStats
+from util import statsUtil
+
+#----------------------------#
+#         DEPRECATED         #
+#----------------------------#
 class ConvStats(IConvStats):
     def __init__(self, conversation):
         super().__init__(conversation)
@@ -205,13 +210,13 @@ class ConvStats(IConvStats):
         return days
 
 
-    def getWordsMentioningStats(self):
+    def getWordsUsedJustByStats(self):
         wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2 = \
             ConvStats._getWordsMentioningStats(self.conversation.sender1Messages, self.conversation.sender2Messages)
         return wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2
 
     @staticmethod
-    def _getWordsMentioningStats(sender1Messages, sender2Messages):
+    def _getWordsUsedJustByStats(sender1Messages, sender2Messages):
         wordsSaidBySender1 = IConvStats.getWordsCount(sender1Messages).keys()
         wordsSaidBySender2 = IConvStats.getWordsCount(sender2Messages).keys()
         wordsSaidByBoth = set(wordsSaidBySender1).intersection(wordsSaidBySender2)
