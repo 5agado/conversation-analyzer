@@ -12,9 +12,9 @@ Conversation format example (based on the current parser):
     2012.06.18 17:27:42 SENDER_2 Message text from sender2
 
 ##Usage
-Each of the three components (i.e. scraper, parser, analyzer) can be accessed separately. 
-The analyzer can be accessed via the main.py script contained in the *src* folder. It will log a set of basic stats for the overall conversation.
-Scraper and parser are instead inside the *util* folder. 
+Each of the three components (i.e. scraper, parser, analyzer) can be run separately. 
+The analyzer can be accessed via the *main.py* script contained in the *src* folder. It will log a set of basic stats for the overall conversation.
+Scraper ( *conversationScraper.py* ) and parser ( *conversationParser.py* ) are instead inside the *util* folder. 
 
 For each see the help menu (-h or --help) for a detailed usage description.
 
@@ -37,7 +37,7 @@ Once the values of *cookie* and *fb_dtsg* have been copied in the *config.ini* f
 
 ##Parser
 To run the parser just provide as arguments the path of the scraped-conversation file and the desired path for the parsed output.
-Additionally you can pass via *--authors* a dictionary like structure to provide a correspondence between the profile IDs and eventually preferred aliases. This might make the parsed output more readable. Example usage:
+Additionally, via *--authors*, you can pass a dictionary like structure to provide a correspondence between the profile IDs and preferred aliases. This will produce a more readable output. Example usage:
 
     --authors "{"11234":"SENDER_1", "112345":"SENDER_2"}"
 
