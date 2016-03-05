@@ -1,16 +1,19 @@
 import argparse
 import configparser
 import json
-import logging
 import os
 import sys
 import time
 
 import requests
 
+from os.path import dirname
+sys.path.append(dirname(__file__)+"\\..")
+from util import logger
+
 
 class ConversationScraper:
-    """Scraper that retrieves, manipulates and stores all messages belonging to a specific Faceboo conversation"""
+    """Scraper that retrieves, process and stores all messages belonging to a specific Facebook conversation"""
 
     REQUEST_WAIT = 10
     ERROR_WAIT = 30
@@ -23,11 +26,12 @@ class ConversationScraper:
         self._fb_dtsg = fb_dtsg
 
     """
-    POST Request full form data:
+    POST Request full form data
+    (<ids_type> is "thread_fbids" for group conversations, "user_ids" otherwise)
 
-    "messages[user_ids][][offset]": "",
-    "messages[user_ids][][timestamp]": "",
-    "messages[user_ids][][]": "",
+    "messages[<ids_type>][][offset]": "",
+    "messages[<ids_type>][][timestamp]": "",
+    "messages[<ids_type>][][]": "",
     "client": "",
     "__user": "",
     "__a": "",
@@ -38,13 +42,15 @@ class ConversationScraper:
     "__rev": ""
 
     """
-    def generateRequestData(self, offset, timestamp, chunkSize):
+    def generateRequestData(self, offset, timestamp, chunkSize, isGroupConversation=False):
         """Generate the data for the POST request.
          :return: the generated data
         """
-        dataForm = {"messages[user_ids][" + str(self._convID) + "][offset]": str(offset),
-                     "messages[user_ids][" + str(self._convID) + "][timestamp]": timestamp,
-                     "messages[user_ids][" + str(self._convID) + "][limit]": str(chunkSize),
+        ids_type = "thread_fbids" if isGroupConversation else "user_ids"
+
+        dataForm = {"messages[{}][{}][offset]".format(ids_type, self._convID) : str(offset),
+                    "messages[{}][{}][timestamp]".format(ids_type, self._convID): timestamp,
+                    "messages[{}][{}][limit]".format(ids_type, self._convID): str(chunkSize),
                      "client": "web_messenger",
                      "__a": "",
                      "__dyn": "",
@@ -70,7 +76,7 @@ class ConversationScraper:
     """
     def executeRequest(self, requestData):
         """Executes the POST request and retrieves the correspondent response content.
-        The request headers are generate here
+        Request headers are generated here
         :return: the response content
         """
         headers = {"Host": "www.facebook.com",
@@ -90,7 +96,7 @@ class ConversationScraper:
         start = time.time()
         response = requests.post(url, data=requestData, headers=headers)
         end = time.time()
-        logging.info("Retrieved in {0:.2f}s".format(end-start))
+        logger.info("Retrieved in {0:.2f}s".format(end-start))
 
         #Remove additional leading characters
         msgsData = response.text[9:]
@@ -102,14 +108,14 @@ class ConversationScraper:
         command = "python -mjson.tool " + self._directory + "conversation.json > " + self._directory + "conversation.pretty.json"
         os.system(command)
 
-    def scrapeConversation(self, merge, offset, timestampOffset, chunkSize, limit):
-        """Retrieves all conversation messages and stores them in a JSON file
-        If merge is specified, then new messages are merged with the previously already scraped conversation
+    def scrapeConversation(self, merge, offset, timestampOffset, chunkSize, limit, isGroupConversation):
+        """Retrieves conversation messages and stores them in a JSON file
+        If merge is specified, the new messages will be merged with the previous version of the conversation, if present
         """
 
         if merge:
             if not os.path.exists(self._directory + "conversation.json"):
-                logging.error("Conversation not present. Merge operation not possible")
+                logger.error("Conversation not present. Merge operation not possible")
                 return
             with open(self._directory + "conversation.json") as conv:
                 convMessages = json.load(conv)
@@ -118,25 +124,24 @@ class ConversationScraper:
         if not os.path.exists(self._directory):
             os.makedirs(self._directory)
 
-        logging.info("Starting scraping of conversation {}".format(self._convID))
+        logger.info("Starting scraping of conversation {}".format(self._convID))
 
         messages = []
         msgsData = ""
         timestamp = "" if timestampOffset == 0 else str(timestampOffset)
         while self.CONVERSATION_ENDMARK not in msgsData:
-            requestChunkSize = chunkSize if limit <= 0 else min(chunkSize, limit-numMsgs)
-            reqData = self.generateRequestData(offset, timestamp, requestChunkSize)
-            logging.info("Retrieving messages " + str(offset) + "-" + str(requestChunkSize+offset))
+            requestChunkSize = chunkSize if limit <= 0 else min(chunkSize, limit-len(messages))
+            reqData = self.generateRequestData(offset, timestamp, requestChunkSize, isGroupConversation)
+            logger.info("Retrieving messages " + str(offset) + "-" + str(requestChunkSize+offset))
             msgsData = self.executeRequest(reqData)
             jsonData = json.loads(msgsData)
 
-            if jsonData and jsonData['payload']:
-                if jsonData['payload']['actions']:
+            if jsonData and ('payload' in jsonData) and jsonData['payload']:
+                if ('actions' in jsonData['payload']) and jsonData['payload']['actions']:
                     actions = jsonData['payload']['actions']
 
                     #case when the last message already present in the conversation
                     #is older newer than the first one of the current retrieved chunk
-                    #print(str(convMessages[-1]["timestamp"]) + " > " + str(actions[0]["timestamp"]))
                     if merge and convMessages[-1]["timestamp"] > actions[0]["timestamp"]:
                         for i, action in enumerate(actions):
                             if convMessages[-1]["timestamp"] == actions[i]["timestamp"]:
@@ -156,13 +161,16 @@ class ConversationScraper:
                     #update timestamp
                     timestamp = str(actions[0]["timestamp"])
                 else:
-                    logging.error("Response error. No messages found")
-                    logging.error(msgsData)
-                    break
+                    if 'errorSummary' in jsonData:
+                        logger.error("Response error: " + jsonData['errorSummary'])
+                    else:
+                        logger.error("Response error. No messages found")
+                        logger.error(msgsData)
+                    return
             else:
-                logging.error("Response error. Empty data or payload")
-                logging.error(msgsData)
-                logging.info("Retrying in " + str(self.ERROR_WAIT) + " seconds")
+                logger.error("Response error. Empty data or payload")
+                logger.error(msgsData)
+                logger.info("Retrying in " + str(self.ERROR_WAIT) + " seconds")
                 time.sleep(self.ERROR_WAIT)
                 continue
 
@@ -173,17 +181,14 @@ class ConversationScraper:
             time.sleep(self.REQUEST_WAIT)
 
         if merge:
-            logging.info("Successfully merged {} new messages".format(numMergedMsgs))
-            logging.info("Conversation total message count = {}".format(len(messages)))
+            logger.info("Successfully merged {} new messages".format(numMergedMsgs))
+            logger.info("Conversation total message count = {}".format(len(messages)))
         else:
-            logging.info("Conversation scraped successfully. {} messages retrieved".format(len(messages)))
+            logger.info("Conversation scraped successfully. {} messages retrieved".format(len(messages)))
 
         self.writeMessages(messages)
 
 def main(_):
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-
     parser = argparse.ArgumentParser(description='Conversation Scraper')
     parser.add_argument('--id', metavar='conversationID', dest='convID', required=True)
     parser.add_argument('--size', metavar='chunkSize', type=int, dest='chunkSize', default=2000,
@@ -200,9 +205,12 @@ def main(_):
     #avoid the need to scrape it all from the beginning
     parser.add_argument('-m', dest='merge', action='store_true',
                         help="merge the new messages with previously scraped conversation")
+    parser.add_argument('-g', dest='isGroupConversation', action='store_true',
+                        help="specify if you want to scrape a group conversation")
     parser.set_defaults(merge=False)
-    parser.add_argument('--out', metavar='outputDir', dest='outDir', default='..\\..\\Messages')
-    parser.add_argument('--conf', metavar='configFilepath', dest='configFilepath', default='..\\..\\config.ini')
+    baseFolderPath = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
+    parser.add_argument('--out', metavar='outputDir', dest='outDir', default= baseFolderPath+'\\Messages')
+    parser.add_argument('--conf', metavar='configFilepath', dest='configFilepath', default= baseFolderPath+'\\config.ini')
 
     args = parser.parse_args()
     convID = args.convID
@@ -211,6 +219,7 @@ def main(_):
     offset = args.offset
     limit = args.limit
     merge = args.merge
+    isGroupConversation = args.isGroupConversation
     outDir = args.outDir
     configFilepath = args.configFilepath
 
@@ -222,7 +231,7 @@ def main(_):
     fb_dtsg = config.get(DATA_SECTION, "Fb_dtsg")
 
     scraper = ConversationScraper(convID, cookie, fb_dtsg, outDir)
-    scraper.scrapeConversation(merge, offset, timestampOffset, chunkSize, limit)
+    scraper.scrapeConversation(merge, offset, timestampOffset, chunkSize, limit, isGroupConversation)
 
 if __name__ == "__main__":
     main(sys.argv[1:])

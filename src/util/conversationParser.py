@@ -1,8 +1,11 @@
 import argparse
 import json
-import logging
 import sys
 import time
+
+from os.path import dirname
+sys.path.append(dirname(__file__)+"\\..")
+from util import logger
 
 
 def parseMessage(msgData, authors):
@@ -21,14 +24,14 @@ def parseMessage(msgData, authors):
         body = msgData["body"].replace("\n", " ")
         authorId = msgData["author"].split(":")[1]
         if authorId not in authors:
-            logging.warning("Missing value for author ID {}. Using directly the ID for all successive messages")
+            logger.warning("Missing value for author ID {}. Using directly the ID for all successive messages".format(authorId))
             authors[authorId] = str(authorId)
         author = authors[authorId]
         message = str(dateAndTime) + " " + author + " " + body
         return message
     except KeyError:
-        logging.error("Parsing message. KeyError")
-        logging.error(msgData)
+        logger.error("Parsing message. KeyError")
+        logger.error(msgData)
         return None
 
 def parseConversation(convPath, out, authors):
@@ -51,7 +54,7 @@ def parseConversation(convPath, out, authors):
     messages = []
     for action in actions:
         if "log_message_type" in action:
-            logging.info("Skipping message of type: " + action["log_message_type"])
+            logger.info("Skipping message of type: " + action["log_message_type"])
             continue
         msg = parseMessage(action, authors)
         if msg:
@@ -61,9 +64,6 @@ def parseConversation(convPath, out, authors):
         f.write(msg + "\n")
 
 def main(_):
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-
     parser = argparse.ArgumentParser(description='Conversation Parser')
     parser.add_argument('--in', metavar='conversationPath', dest='convPath', required=True)
     parser.add_argument('--out', metavar='outputFile', dest='out', required=True)

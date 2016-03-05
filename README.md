@@ -3,7 +3,7 @@ Analyzer and statistics generator for text-based conversations. If interested, c
 
 Includes scraper and parser for Facebook conversations. 
 
-The scraper retrieves all messages of a specific Facebook conversation and saves them in a JSON file. At this step messages include all fields and attributes as defined by the Facebook response format. [As for now the scraper doesn't work for group conversations]
+The scraper retrieves all messages of a specific Facebook conversation and saves them in a JSON file. At this step messages include all fields and attributes as defined by the Facebook response format.
 
 The parser takes as input the result of the scraper and extracts only the textual messages and related attributes, for then saving them to a text file. Such file is used as input for the conversation analyzer.  
 Conversation format example (based on the current parser):
@@ -24,16 +24,19 @@ Basic configurations for all modules can be managed via the *config.ini* file. T
 The only additional requirement for parser and scraper is the *requests* package. For the analyzer I used Conda; *requirements.txt* is the exported environment file. See [here](http://conda.pydata.org/docs/using/envs.html#share-an-environment) for a guide on how to manage Conda environments.
 
 ##Scraper
-In order to access Facebook conversations the following parameters are required: *cookie* and *fb_dtsg* and conversation ID. The ID of a conversation [not a group one] corresponds to the ID of the other participant.
+In order to access Facebook conversations the following parameters are required: *cookie* and *fb_dtsg* and conversation ID.
 
 Such data can be found via the following procedure:
 
 1. Open the desired conversation in a browser
 2. Check the network traffic via the preferred developer tool or equivalent
 3. Scroll up in the conversation until a POST request is issued to [thread\_info.php](https://www.facebook.com/ajax/mercury/thread_info.php)
-4. Locate and copy the required parameters (i.e. *cookie*, *fb_dtsg*, *user_ids*)
+4. Locate and copy the required parameters: *cookie*, *fb_dtsg* and conversation ID  
+4.1 You can find the conversation ID in a line with this format: *messages\[user_ids\]\[\<conversation_ID\>\]..* or *messages\[thread_fbids\]\[\<conversation_ID\>\]* for group conversations.
 
-Once the values of *cookie* and *fb_dtsg* have been copied in the *config.ini* file, the scraper can be run by passing the conversation ID as argument (--id). Via the *-m* flag new messages can be merged with the previously scraped part of the same conversation, if present.
+Once the values of *cookie* and *fb_dtsg* have been copied in the *config.ini* file, the scraper can be run by passing the conversation ID as argument (--id). 
+If you want to scrape a group conversation, use the *-g* flag, the scraper will not work otherwise.
+Via the *-m* flag new messages can be merged with the previously scraped part of the same conversation, if present.
 
 ##Parser
 To run the parser just provide as arguments the path of the scraped-conversation file and the desired path for the parsed output.
@@ -63,7 +66,6 @@ Related classes are in the *stats* folder. The suggested and maintained class to
 * **Aggregation**: most of the previous groups include the option of aggregation by sender, or by datetime features (e.g. hour, day, month, year) where relevant
 
 ##TODO
-    * Generalize for group conversations (all three components)
     * NLP analyses for message, also sentiment analysis and similar
         ** consider checking emotion related to emoticon
         ** words category/sentiment (for example for word count)
