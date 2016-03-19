@@ -13,6 +13,13 @@ from util import conversationGenerator
 from util import io as mio
 from util import plotting as mplot
 
+from matplotlib import animation
+from stats.iConvStats import IConvStats
+
+
+
+import seaborn as sns
+
 
 #from sklearn import datasets, linear_model
 
@@ -40,11 +47,14 @@ def init(_):
     wCountLimit = args.wCountLimit
 
     initLogger()
-    #conv = Conversation(mio.getResourcesPath() + "\\unittest\\test_plotting.txt")
-    conv = ConversationDataframe(mio.getResourcesPath() + "\\unittest\\test_plotting.txt")
+    conv = ConversationDataframe(mio.getResourcesPath() + "\\unittest\\test_basic_conv.txt")
     #conv = Conversation(filepath)
     conv.loadMessages(numMsgs)
-    mio.printWordsUsedJustByToFile(conv)
+    #saveBunchOfStatsDf(conv)
+    filepath = conv.statsFolder + '\\' + 'emoticonCount.txt'
+    df = conv.stats.generateStats(IConvStats.STATS_NAME_WORDCOUNT)
+    mio.printDataFrameToFile(df, filepath)
+    #testAnimation(conv)
     return
 
     #sentences = mnlp.sentenceSegmentation(conv.getEntireConvText())
@@ -56,6 +66,42 @@ def init(_):
     #mio.showConcordance(conv, "phone")
     #tokens = nltk.word_tokenize(rawText)
     #words = [w.lower() for w in tokens]
+
+def saveBunchOfStatsDf(conv):
+    statsList = [IConvStats.STATS_NAME_BASICLENGTH, IConvStats.STATS_NAME_LEXICAL, IConvStats.STATS_NAME_WORDCOUNT,
+        IConvStats.STATS_NAME_EMOTICONS]
+    for stat in statsList:
+        filepath = conv.statsFolder + '\\' + stat + '.txt'
+        df = conv.stats.generateStats(stat)
+        mio.printDataFrameToFile(df, filepath)
+        filepath = conv.statsFolder + '\\' + stat + 'byHour.txt'
+        df = conv.stats.generateStatsByHour(stat)
+        mio.printDataFrameToFile(df, filepath)
+        filepath = conv.statsFolder + '\\' + stat + 'byYearAndHour.txt'
+        df = conv.stats.generateStatsByYearAndHour(stat)
+        mio.printDataFrameToFile(df, filepath)
+
+def testAnimation(conv):
+    data = conv.stats.generateStatsByYearMonthHour(IConvStats.STATS_NAME_BASICLENGTH)
+    data = data.groupby('year').get_group('2014')
+    grouped = data.groupby('month')
+    keys = sorted(list(grouped.groups.keys()))
+    print(keys)
+    fig = plt.figure()
+    ax = plt.axes()
+
+    def animate(i):
+        df = grouped.get_group(keys[i]).sort_values("hour")
+
+        print(df.head())
+        ax.clear()
+        sns.barplot(x="hour", y="lenMsgs", hue="sender", data=df, ax=ax)
+        ax.set_title(i)
+
+    anim = animation.FuncAnimation(fig, animate,
+                               frames=len(grouped), interval=2000)
+    plt.show()
+
 
 def testZipfLaw(conv):
     _, wCount, _ = conv.stats.getWordCountStats()

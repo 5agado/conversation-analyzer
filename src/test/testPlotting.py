@@ -10,6 +10,7 @@ from stats.iConvStats import IConvStats
 
 class PlottingTestCase(unittest.TestCase):
     TEST_FILE = "\\unittest\\test_plotting.txt"
+    anonymise = True
 
     @classmethod
     def setUpClass(cls):
@@ -21,10 +22,12 @@ class PlottingTestCase(unittest.TestCase):
         conv.loadMessages(0)
 
         #anonymise conversation
-        sendersAliases = ['Donnie', 'Frank']
-        aliasesMap = {key:sendersAliases[i] for i, key in enumerate(conv.senders)}
-        conv.messages.replace({'sender':aliasesMap}, inplace=True)
-        conv.senders = sendersAliases
+        if PlottingTestCase.anonymise:
+            sendersAliases = ['Donnie', 'Frank']
+            if len(sendersAliases) == len(conv.senders):
+                aliasesMap = {key:sendersAliases[i] for i, key in enumerate(conv.senders)}
+                conv.messages.replace({'sender':aliasesMap}, inplace=True)
+                conv.senders = sendersAliases
 
         return conv
 
@@ -34,7 +37,8 @@ class PlottingTestCase(unittest.TestCase):
         mplot.plotBasicLengthStatsByYearAndMonth(data, ['2015'])
 
     def test_singleLengthStatByHour(self):
-        data = self.conv.stats.generateStatsByHour(IConvStats.STATS_NAME_BASICLENGTH)
+        #data = self.conv.stats.generateStatsByHour(IConvStats.STATS_NAME_BASICLENGTH)
+        data = mio.loadDataFromFile(self.conv.statsFolder + '\\' + IConvStats.STATS_NAME_BASICLENGTH + 'byHour.txt')
         data = data[data.sender != 'total']
         mplot.plotSingleBasicLengthStatByHour(data, 'lenMsgs')
 

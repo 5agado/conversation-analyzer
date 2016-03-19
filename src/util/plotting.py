@@ -165,14 +165,14 @@ def plotZipfLaw(words, count):
 
     plt.show()
 
-def plotRichnessVariation(data, yearToShow=None):
+def plotRichnessVariation(data, yearsToShow=[]):
     figureAesthetic()
     def plot(ax, df, count):
         ax = sns.pointplot(data=df, y='lexicalRichness', x='month', hue='sender', ax=ax)
         ax.set_ylim([0, 1])
         ax.set(ylabel='lexical richness (%)' if count == 1 else '')
 
-    _plotByYear(data, 'Vocabulary Richness', plot, yearToShow)
+    _plotByYear(data, 'Vocabulary Richness', plot, yearsToShow)
 
 #TODO refactor
 def plotDaysWithoutMessages(conv):

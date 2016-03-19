@@ -1,10 +1,14 @@
-import logging
 import os
+import sys
 from datetime import datetime
 
 from pandas import read_csv
 
 from model.message import Message
+
+from os.path import dirname
+sys.path.append(dirname(__file__)+"\\..")
+from util import logger
 
 
 def parseMessagesFromFile(filePath, limit=0, startDate=None, endDate=None):
@@ -28,7 +32,7 @@ def parseMessagesFromFile(filePath, limit=0, startDate=None, endDate=None):
                 if limit != 0 and len(messages) >= limit:
                     break
     except IOError:
-        logging.warning("No such file: " + filePath)
+        logger.warning("No such file: " + filePath)
     return messages, senders
 
 def loadDataFromFile(filepath):
@@ -41,7 +45,7 @@ def getSetFromFile(filePath):
         with open(filePath, 'r') as f:
             theSet = {line.strip() for line in f}
     except IOError:
-        logging.warning("No such file " + filePath)
+        logger.warning("No such file " + filePath)
     return theSet
 
 def displayDispersionPlot(conv, words):
@@ -53,53 +57,53 @@ def showConcordance(conv, word):
     text.concordance(word)
 
 def printBasicLengthStats(basicLengthStatsDf):
-    logging.info("##BASIC LENGTH STATS")
+    logger.info("##BASIC LENGTH STATS")
 
     for sender, vals in basicLengthStatsDf.iterrows():
         totalNum, totalLength, avgLegth = vals.tolist()
-        logging.info("#" + sender)
-        logging.info("Number of messages: {}".format(totalNum))
-        logging.info("Total length: {}".format(totalLength))
-        logging.info("Average length: {0:.2f}".format(avgLegth))
+        logger.info("#" + sender)
+        logger.info("Number of messages: {:.0f}".format(totalNum))
+        logger.info("Total length: {:.0f}".format(totalLength))
+        logger.info("Average length: {0:.2f}".format(avgLegth))
 
-    logging.info('-'*10)
+    logger.info('-'*10)
 
 def printLexicalStats(lexicalStatsDf):
-    logging.info("##LEXICAL STATS")
+    logger.info("##LEXICAL STATS")
 
     for sender, vals in lexicalStatsDf.iterrows():
         tokensCount, vocabularyCount, lexicalRichness = vals.tolist()
-        logging.info("#" + sender)
-        logging.info("Tokens count: {}".format(tokensCount))
-        logging.info("Distinct tokens count: {}".format(vocabularyCount))
-        logging.info("Lexical diversity: {0:.5f}".format(lexicalRichness))
+        logger.info("#" + sender)
+        logger.info("Tokens count: {:.0f}".format(tokensCount))
+        logger.info("Distinct tokens count: {:.0f}".format(vocabularyCount))
+        logger.info("Lexical diversity: {0:.5f}".format(lexicalRichness))
 
-    logging.info('-'*10)
+    logger.info('-'*10)
 
 def printIntervalStatsFor(start, end, interval, days):
-    logging.info("##Conv Interval")
-    logging.info("Conversation started: {}".format(str(start)))
-    logging.info("Conversation ended: {}".format(str(end)))
-    logging.info("Conversation overall duration: {}".format(interval))
+    logger.info("##Conv Interval")
+    logger.info("Conversation started: {}".format(str(start)))
+    logger.info("Conversation ended: {}".format(str(end)))
+    logger.info("Conversation overall duration: {}".format(interval))
 
-    logging.info("{} days without messages".format(len(days)))
+    logger.info("{:.0f} days without messages".format(len(days)))
     percentage = (len(days)/(interval.days+1))*100
-    logging.info("{0:.2f}% out of the conversation overall days-interval".format(percentage))
-    #logging.info(days)
+    logger.info("{0:.2f}% out of the conversation overall days-interval".format(percentage))
+    #logger.info(days)
 
-    logging.info('-'*10)
+    logger.info('-'*10)
 
 def printEmoticonsStats(emoticonsStatsDf):
-    logging.info("##EMOTICONS STATS")
+    logger.info("##EMOTICONS STATS")
 
     for sender, vals in emoticonsStatsDf.iterrows():
         numEmoticons, emoticonsRatio, lenMsgs = vals.tolist()
-        logging.info("#" + sender)
-        logging.info("Emoticons count: {}".format(numEmoticons))
-        logging.info("Messages total length: {}".format(lenMsgs))
-        logging.info("Ratio: {0:.5f}".format(emoticonsRatio))
+        logger.info("#" + sender)
+        logger.info("Emoticons count: {:.0f}".format(numEmoticons))
+        logger.info("Messages total length: {:.0f}".format(lenMsgs))
+        logger.info("Ratio: {0:.5f}".format(emoticonsRatio))
 
-    logging.info('-'*10)
+    logger.info('-'*10)
 
 def printWordsBySender(conv):
     data = conv.stats.getWordsBySender()
@@ -117,12 +121,12 @@ def printWordsUsedJustByToFile(conv):
 
 def printDelayStatsFor(conv):
     delay = conv.stats.getDelayStats()
-    logging.info("##Reply Delay Stats")
-    logging.info("Reply delay by sender: ")
+    logger.info("##Reply Delay Stats")
+    logger.info("Reply delay by sender: ")
     for s, d in delay.items():
         msg = "Between {} and {}".format(s.split(':')[0], s.split(':')[1])
-        logging.info('{} : {}'.format(msg, d))
-    logging.info('-'*10)
+        logger.info('{} : {}'.format(msg, d))
+    logger.info('-'*10)
 
 def printDataFrameToFile(df, filepath):
     #df.index.name = aggType

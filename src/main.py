@@ -1,30 +1,20 @@
 import argparse
 import configparser
-import logging
 import sys
+import os
 
 import util.io as mio
 from model.conversation import Conversation
 from model.conversationDataframe import ConversationDataframe
 from stats.iConvStats import IConvStats
 
-
-def initLogger():
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
-    formatter = logging.Formatter("%(asctime)s %(levelname)s - %(message)s",
-                                  "%Y-%m-%d %H:%M:%S")
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-
 def main(_):
     parser = argparse.ArgumentParser(description='Conversation Analyzer')
     parser.add_argument('-p', metavar='conversationFilepath', dest='filepath', required=True)
     parser.add_argument('-n', metavar='numberOfMessages', type=int, dest='numMsgs', default=0,
                         help='number of conversation messages to be analyzed')
-    parser.add_argument('--conf', metavar='configFilepath', dest='configFilepath', default='..\\config.ini')
+    baseFolderPath = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+    parser.add_argument('--conf', metavar='configFilepath', dest='configFilepath', default= baseFolderPath+'\\config.ini')
 
     args = parser.parse_args()
     filepath = args.filepath
@@ -44,7 +34,6 @@ def main(_):
     P_EMOTICONS_STATS = config.getboolean(STATS_SECTION, "P_EMOTICONS_STATS")
     P_LEXICAL_STATS = config.getboolean(STATS_SECTION, "P_LEXICAL_STATS")
 
-    initLogger()
     #conv = Conversation(filepath)
     conv = ConversationDataframe(filepath)
     conv.loadMessages(numMsgs)

@@ -38,6 +38,10 @@ def cleanWord(word, skipSet):
         cWord = re.sub('^[^a-z0-9]*|[^a-z0-9]*$', '', word)
         return cWord
 
+def getEmoticonsCount(text):
+    emoticonsCount = collections.Counter(getEmoticonsFromText(text))
+    return emoticonsCount
+
 def getEmoticonsFromText(text):
     emoticons = re.compile("""(^|(?<=\s))(
         #Western

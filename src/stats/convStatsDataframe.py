@@ -40,6 +40,9 @@ class ConvStatsDataframe(IConvStats):
     def generateStatsByYearMonthHour(self, statsType, **kwargs):
         return self._generateStats(statsType, ['year', 'month', 'hour'], **kwargs)
 
+    def generateStatsByYearMonthDayHour(self, statsType, **kwargs):
+        return self._generateStats(statsType, ['year', 'month', 'day', 'hour'], **kwargs)
+
     def _generateStats(self, statsType, groupByColumns=[], **kwargs):
         if statsType == IConvStats.STATS_NAME_BASICLENGTH:
             res = self._generateBasicLengthStatsBy(groupByColumns, **kwargs)
@@ -49,6 +52,8 @@ class ConvStatsDataframe(IConvStats):
             res = self._generateWordCountStatsBy(groupByColumns, **kwargs)
         elif statsType == IConvStats.STATS_NAME_EMOTICONS:
             res = self._generateEmoticonsStatsBy(groupByColumns, **kwargs)
+        elif statsType == IConvStats.STATS_NAME_EMOTICONCOUNT:
+            res = self._generateEmoticonCountStatsBy(groupByColumns, **kwargs)
         else:
             raise Exception(statsType + 'Stat not implemented')
         return res
@@ -74,40 +79,54 @@ class ConvStatsDataframe(IConvStats):
     #TODO consider option of having 0 if the word does not appear for a specific sender
     def _generateWordCountStatsBy(self, groupByColumns=[], word=None):
         fun = lambda x: sorted(statsUtil.getWordsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True)
-        res = self.df.rename(columns={'text':'wordCount'})
-        res = res.groupby(['sender'] + groupByColumns, as_index=False).agg({'wordCount' : fun})
+        label = 'wordCount'
+        countId = 'word'
+        results = self._generateCountStatsBy(fun, label, countId, groupByColumns, word)
+        return results
+
+    def _generateEmoticonCountStatsBy(self, groupByColumns=[], emoticon=None):
+        fun = lambda x: sorted(statsUtil.getEmoticonsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True)
+        label = 'emoticonCount'
+        countId = 'emoticon'
+        results = self._generateCountStatsBy(fun, label, countId, groupByColumns, emoticon)
+        return results
+
+    #TODO might be merged with previous, just few keywords differ
+    def _generateCountStatsBy(self, aggFun, label, countId, groupByColumns=[], token=None):
+        res = self.df.rename(columns={'text':label})
+        res = res.groupby(['sender'] + groupByColumns, as_index=False).agg({label : aggFun})
         grouped = res.groupby(['sender'] + groupByColumns, as_index=False)
         groupDfs = []
         for name, group in grouped:
-            wordCount = group['wordCount'].values[0]
+            count = group[label].values[0]
 
             #name is a tuple
             if groupByColumns:
-                groupData = [[x[0], x[1]] + [n for n in name] for x in wordCount if (not word or x[0]==word)]
+                groupData = [[x[0], x[1]] + [n for n in name] for x in count if (not token or x[0]==token)]
             #name is a single value
             else:
-                groupData = [[x[0], x[1], name] for x in wordCount if (not word or x[0]==word)]
-            df = pd.DataFrame(groupData, columns=['word', 'count', 'sender']+groupByColumns)
+                groupData = [[x[0], x[1], name] for x in count if (not token or x[0]==token)]
+            df = pd.DataFrame(groupData, columns=[countId, 'count', 'sender']+groupByColumns)
             groupDfs.append(df)
 
         results = pd.concat(groupDfs)
         results['total'] = results['count']
         results['usageCount'] = results['sender']
-        tmp = results.groupby(['word']+groupByColumns, as_index=True).agg({'total' : 'sum',
+        tmp = results.groupby([countId]+groupByColumns, as_index=True).agg({'total' : 'sum',
                                                                            'usageCount' : lambda x : x.nunique()})
-        results.set_index(['word']+groupByColumns, inplace=True)
+        results.set_index([countId]+groupByColumns, inplace=True)
         results['total'] = tmp['total']
         results['usageCount'] = tmp['usageCount']
         results['frequency'] = results['count']/results['total']
         results['inverseSenderFrequency'] = (results['sender'].nunique()/results['usageCount']).apply(math.log)
         results['tf-isf'] = results['frequency']*results['inverseSenderFrequency']
-        #results.set_index(['word', 'sender']+groupByColumns, inplace=True)
+        #results.set_index([countId, 'sender']+groupByColumns, inplace=True)
         results.drop('usageCount', axis=1, inplace=True)
         return results
 
+    #TODO need to optimize performances
     def _generateLexicalStatsBy(self, groupByColumns=[]):
         res = self.df.rename(columns={'text':'text'})
-        #TODO make it quicker. No need to clean words or check emoticons, lower case should be
         #enough, probably the best is to make another simpler method in statsUtil
         res = res.groupby(['sender'] + groupByColumns, as_index=False).agg({'text' : lambda x: statsUtil.getWords(" ".join(x))})
         res['tokensCount'] = res['text'].apply(lambda x: len(x))
@@ -195,7 +214,7 @@ class ConvStatsDataframe(IConvStats):
         if sender:
             wCount = wordsCountStatsDf[wordsCountStatsDf['sender']==sender]
         else:
-            wCount = pd.DataFrame(wordsCountStatsDf['total']).drop_duplicates(take_last=True)
+            wCount = pd.DataFrame(wordsCountStatsDf['total']).drop_duplicates(keep='last')
         if word:
             val = wCount['count' if sender else 'total'].values
             return 0 if not val else val[0]

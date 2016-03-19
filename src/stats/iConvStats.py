@@ -9,6 +9,7 @@ class IConvStats(metaclass=ABCMeta):
     STATS_NAME_BASICLENGTH = 'basicLengthStats'
     STATS_NAME_LEXICAL = 'lexicalStats'
     STATS_NAME_WORDCOUNT = 'wordCountStats'
+    STATS_NAME_EMOTICONCOUNT = 'emoticonCountStats'
     STATS_NAME_EMOTICONS = 'emoticonsStats'
     STATS_NAME_DELAY = 'emoticonsStats'
 
