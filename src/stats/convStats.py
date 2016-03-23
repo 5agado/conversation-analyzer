@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import collections
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import numpy as np
 import pandas as pd
@@ -223,3 +223,71 @@ class ConvStats(IConvStats):
         wordsSaidJustByS1 = set(wordsSaidBySender1).difference(wordsSaidBySender2)
         wordsSaidJustByS2 = set(wordsSaidBySender2).difference(wordsSaidBySender1)
         return wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2
+
+    def getDelayStats(self):
+        return ConvStats._getDelayStatsFor(self.conversation.messages)
+
+    @staticmethod
+    def _getDelayStatsFor(messages):
+        """Calculates the delays between the messages of the conversation.
+        senderDelay consider the time that passed between a sender message and the successive reply
+        from another sender. The result value is the sum of such time for each message.
+        Notice that if the same sender sends many message, only the last one (before another sender message)
+        is taken into consideration"""
+
+        senderDelay = collections.defaultdict(timedelta)
+        prevSender = messages[0].sender
+        prevDatetime = datetime.strptime(messages[0].datetime, Message.DATE_TIME_FORMAT)
+        for m in messages[1:]:
+            currentDatetime = datetime.strptime(m.datetime, Message.DATE_TIME_FORMAT)
+            currentSender = m.sender
+            thisDelay = currentDatetime - prevDatetime
+            if prevSender != currentSender:
+                senderDelay[prevSender+ ':' +currentSender] += thisDelay
+                prevSender = currentSender
+            prevDatetime = currentDatetime
+
+        return senderDelay
+
+    def getDelayStatsByLength(self):
+        return ConvStats._getDelayStatsByLength(self.conversation.messages)
+
+    @staticmethod
+    def _getDelayStatsByLength(messages):
+        delay = ([])
+        senderDelay = collections.defaultdict(list)
+        prevSender = messages[0].sender
+        prevDatetime = datetime.strptime(messages[0].datetime, Message.DATE_TIME_FORMAT)
+        #TODO Consider the option to sum all messages length until reply
+        msgLen = messages[0].getMessageLength()
+        for m in messages[1:]:
+            currentDatetime = datetime.strptime(m.datetime, Message.DATE_TIME_FORMAT)
+            currentSender = m.sender
+            thisDelay = currentDatetime - prevDatetime
+            if prevSender != currentSender:
+                delay.append((msgLen, thisDelay.total_seconds()))
+                senderDelay[prevSender+ ':' +currentSender].append((msgLen, thisDelay.total_seconds()))
+                prevSender = currentSender
+            msgLen = m.getMessageLength()
+            prevDatetime = currentDatetime
+
+        return delay, senderDelay
+
+    @staticmethod
+    def getSequentialMessagesStats(messages):
+        numOfSeqMsgs = collections.defaultdict(int)
+        senderDelay = collections.defaultdict(timedelta)
+        prevSender = messages[0].sender
+        prevDatetime = datetime.strptime(messages[0].datetime, Message.DATE_TIME_FORMAT)
+        for m in messages[1:]:
+            currentDatetime = datetime.strptime(m.datetime, Message.DATE_TIME_FORMAT)
+            currentSender = m.sender
+            thisDelay = currentDatetime - prevDatetime
+            if prevSender == currentSender:
+                numOfSeqMsgs[prevSender] += 1
+                senderDelay[prevSender] += thisDelay
+            else:
+                prevSender = currentSender
+            prevDatetime = currentDatetime
+
+        return numOfSeqMsgs, senderDelay

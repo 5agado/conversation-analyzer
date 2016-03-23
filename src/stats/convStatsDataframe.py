@@ -55,7 +55,7 @@ class ConvStatsDataframe(IConvStats):
         elif statsType == IConvStats.STATS_NAME_EMOTICONCOUNT:
             res = self._generateEmoticonCountStatsBy(groupByColumns, **kwargs)
         else:
-            raise Exception(statsType + 'Stat not implemented')
+            raise Exception(statsType + ' Stat not implemented')
         return res
 
     def _generateBasicLengthStatsBy(self, groupByColumns=[]):
@@ -89,6 +89,20 @@ class ConvStatsDataframe(IConvStats):
         label = 'emoticonCount'
         countId = 'emoticon'
         results = self._generateCountStatsBy(fun, label, countId, groupByColumns, emoticon)
+        return results
+
+    def _generateBigramCountStatsBy(self, groupByColumns=[], bigram=None):
+        fun = lambda x: sorted(statsUtil.getBigramsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True)
+        label = 'bigramCount'
+        countId = 'bigram'
+        results = self._generateCountStatsBy(fun, label, countId, groupByColumns, bigram).sort_values("tf-isf", ascending=False)
+        return results
+
+    def _generateTrigramCountStatsBy(self, groupByColumns=[], trigram=None):
+        fun = lambda x: sorted(statsUtil.getTrigramsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True)
+        label = 'trigramCount'
+        countId = 'trigram'
+        results = self._generateCountStatsBy(fun, label, countId, groupByColumns, trigram).sort_values("tf-isf", ascending=False)
         return results
 
     #TODO might be merged with previous, just few keywords differ
@@ -166,6 +180,28 @@ class ConvStatsDataframe(IConvStats):
             res.loc['total'] = res.sum()
             res['emoticonsRatio'] = res['numEmoticons']/res['lenMsgs']
             return res[['numEmoticons', 'emoticonsRatio', 'lenMsgs']]
+
+    #TODO add delay threshold, do not sum too big delays
+    def _generateDelayStats(self):
+        """Calculates the delays between the messages of the conversation.
+        senderDelay consider the time that passed between a sender message and the successive reply
+        from another sender. The result value is the sum of such time for each message.
+        Notice that if the same sender sends many message, only the last one (before another sender message)
+        is taken into consideration"""
+
+        def computeDelay(messages):
+            data = messages[['datetime', 'sender']]
+            delay = np.insert(data['datetime'].iloc[1:].values -data['datetime'].iloc[:-1].values, 0, 0)
+            data['delay'] = delay
+            return data
+
+        #sender of current message must be different from sender previous message
+        def removeConsecutiveMessages(messages):
+            return messages[messages['sender'] != messages['sender'].shift()]
+
+        res = removeConsecutiveMessages(computeDelay(self.df))
+        res = res.groupby('sender').sum()
+        return res
 
     def _getIntervalStatsFor(self):
         startDatetime = self.df.iloc[0]['datetime']

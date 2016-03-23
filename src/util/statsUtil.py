@@ -4,7 +4,7 @@ import collections
 import math
 import re
 import statistics
-
+import nltk
 
 def getCentralTendencyValuesFor(measures):
     mean = measures.mean()
@@ -24,6 +24,16 @@ def getVariationValuesFor(measures):
 def getWordsCount(text):
     wordsCount = collections.Counter(getWords(text))
     return wordsCount
+
+def getBigramsCount(text):
+    words = getWords(text)
+    bigramsCount = collections.Counter(nltk.bigrams(words))
+    return bigramsCount
+
+def getTrigramsCount(text):
+    words = getWords(text)
+    trigramsCount = collections.Counter(nltk.trigrams(words))
+    return trigramsCount
 
 def getWords(text):
     mText = text.lower()

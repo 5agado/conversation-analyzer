@@ -59,6 +59,8 @@ Related classes are in the *stats* folder. The suggested and maintained class to
 
 * **Word Count/Frequency** (top N words, word count, words said just by, tf-idf, relevant words by sender, zipf's law)  
 
+* **N-Gram Count/Frequency** (bi and trigrams by sender, tf-idf)
+
 * **Emoticons Stats** (number of emoticons, emoticon ratio, emoticon count)  
 
 * **Reply Delay** (reply delay by sender, reply delay by message length, num of sequential messages by sender)  
@@ -70,7 +72,6 @@ Related classes are in the *stats* folder. The suggested and maintained class to
         ** consider checking emotion related to emoticon
         ** words category/sentiment (for example for word count)
     * different-conversations comparison
-    * provide command line for stats generation (not feasible via config file)
 
 ## License
 

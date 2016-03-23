@@ -12,6 +12,7 @@ from model.conversationDataframe import ConversationDataframe
 from util import conversationGenerator
 from util import io as mio
 from util import plotting as mplot
+from util import statsUtil
 
 from matplotlib import animation
 from stats.iConvStats import IConvStats
@@ -47,13 +48,13 @@ def init(_):
     wCountLimit = args.wCountLimit
 
     initLogger()
-    conv = ConversationDataframe(mio.getResourcesPath() + "\\unittest\\test_basic_conv.txt")
+    conv = ConversationDataframe(mio.getResourcesPath() + "\\unittest\\test_plotting.txt")
     #conv = Conversation(filepath)
     conv.loadMessages(numMsgs)
-    #saveBunchOfStatsDf(conv)
-    filepath = conv.statsFolder + '\\' + 'emoticonCount.txt'
-    df = conv.stats.generateStats(IConvStats.STATS_NAME_WORDCOUNT)
-    mio.printDataFrameToFile(df, filepath)
+    res = conv.messages.rename(columns={'text':'numMsgs'})
+    res['lenMsgs'] = res['numMsgs'].apply(lambda x: len(x))
+    sns.stripplot(x='hour', y='lenMsgs', data=res)
+    plt.show()
     #testAnimation(conv)
     return
 
