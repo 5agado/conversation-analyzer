@@ -37,8 +37,8 @@ class PlottingTestCase(unittest.TestCase):
         mplot.plotBasicLengthStatsByYearAndMonth(data, ['2015'])
 
     def test_singleLengthStatByHour(self):
-        #data = self.conv.stats.generateStatsByHour(IConvStats.STATS_NAME_BASICLENGTH)
-        data = mio.loadDataFromFile(self.conv.statsFolder + '\\' + IConvStats.STATS_NAME_BASICLENGTH + 'byHour.txt')
+        data = self.conv.stats.generateStatsByHour(IConvStats.STATS_NAME_BASICLENGTH)
+        #data = mio.loadDataFromFile(self.conv.statsFolder + '\\' + IConvStats.STATS_NAME_BASICLENGTH + 'byHour.txt')
         data = data[data.sender != 'total']
         mplot.plotSingleBasicLengthStatByHour(data, 'lenMsgs')
 
