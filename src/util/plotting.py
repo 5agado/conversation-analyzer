@@ -232,7 +232,7 @@ def _plotByYear(data, title, plotFun, yearsToShow=[]):
         ax.set_title(year)
         plotFun(ax, group, count)
         count += 1
-    savePlotAsImage(fig, "image.png")
+    #savePlotAsImage(fig, "image.png")
     sns.plt.show()
 
 #TODO consider using directly plotHoursStats(data):

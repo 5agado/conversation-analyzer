@@ -47,7 +47,7 @@ Additionally, via *--authors*, you can pass a dictionary like structure to provi
 ##Analyzer
 **The analyzer is still a work in progress.**
 
-*main.py* requires as parameter the filepath of the conversation to be analyzed; it will then log and generate a set of basic stats for the overall conversation. 
+I have added a **ipython notebook for easier exploration of the various statistics and analytical results**. Just check out the *conversation-analyzer.ipynb* in the top-level folder. I have left previous outputs as examples, but I encourage you to explore your own data and tweak the stats and plots based on your preferences. If you are not familiar or not willing to check out the notebook, you can still access the old *main.py* for automatic stats running. It requires as parameter the filepath of the conversation to be analyzed; it will then log and generate a set of basic stats for the overall conversation.
 
 Related classes are in the *stats* folder. The suggested and maintained class to use is *convStatsDataframe*, that makes use of Pandas *Dataframe* for the stats generation. In the *test* package you can find unittests and example files that generate or plot different kind of statistics.
 
@@ -66,6 +66,10 @@ Related classes are in the *stats* folder. The suggested and maintained class to
 * **Reply Delay** (reply delay by sender, reply delay by message length, num of sequential messages by sender)  
 
 * **Aggregation**: most of the previous groups include the option of aggregation by sender, or by datetime features (e.g. hour, day, month, year) where relevant
+
+**NEW**  
+
+* **Sentiment Analysis** (joy, anger, disgust, fear values via [IBM Watson Tone Analyzer Service](http://www.ibm.com/watson/developercloud/tone-analyzer.html))
 
 ##TODO
     * different-conversations comparison
