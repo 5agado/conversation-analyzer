@@ -25,3 +25,7 @@ local.properties
 #Resources
 src/resources/tmp
 
+#IPYNB
+*.ipynb_checkpoints
+*.ipynb
+

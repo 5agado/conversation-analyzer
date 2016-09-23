@@ -38,7 +38,7 @@ def init(_):
     parser = argparse.ArgumentParser(description='Conversation Analyzer')
     parser.add_argument('-p', metavar='conversationfilePath', dest='filepath')
     parser.add_argument('-n', metavar='numberOfMessages', type=int,
-                        dest='numMsgs', default=1000)
+                        dest='numMsgs', default=0)
     parser.add_argument('-l', metavar='wordsCountLimit', type=int,
                         dest='wCountLimit', default=20)
 
@@ -48,15 +48,16 @@ def init(_):
     wCountLimit = args.wCountLimit
 
     initLogger()
-    conv = ConversationDataframe(mio.getResourcesPath() + "\\unittest\\test_plotting.txt")
-    #conv = Conversation(filepath)
+    #conv = ConversationDataframe(mio.getResourcesPath() + "\\unittest\\test_plotting.txt")
+    conv = ConversationDataframe(filepath)
     conv.loadMessages(numMsgs)
+    return
+
     res = conv.messages.rename(columns={'text':'numMsgs'})
     res['lenMsgs'] = res['numMsgs'].apply(lambda x: len(x))
     sns.stripplot(x='hour', y='lenMsgs', data=res)
     plt.show()
     #testAnimation(conv)
-    return
 
     #sentences = mnlp.sentenceSegmentation(conv.getEntireConvText())
     #sentences = mnlp.wordTokenization(conv.getEntireConvText())
@@ -69,8 +70,8 @@ def init(_):
     #words = [w.lower() for w in tokens]
 
 def saveBunchOfStatsDf(conv):
-    statsList = [IConvStats.STATS_NAME_BASICLENGTH, IConvStats.STATS_NAME_LEXICAL, IConvStats.STATS_NAME_WORDCOUNT,
-        IConvStats.STATS_NAME_EMOTICONS]
+    statsList = [IConvStats.STATS_NAME_BASICLENGTH, IConvStats.STATS_NAME_LEXICAL,
+                 IConvStats.STATS_NAME_WORDCOUNT, IConvStats.STATS_NAME_EMOTICONS]
     for stat in statsList:
         filepath = conv.statsFolder + '\\' + stat + '.txt'
         df = conv.stats.generateStats(stat)

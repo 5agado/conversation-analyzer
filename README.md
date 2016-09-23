@@ -68,10 +68,8 @@ Related classes are in the *stats* folder. The suggested and maintained class to
 * **Aggregation**: most of the previous groups include the option of aggregation by sender, or by datetime features (e.g. hour, day, month, year) where relevant
 
 ##TODO
-    * NLP analyses for message, also sentiment analysis and similar
-        ** consider checking emotion related to emoticon
-        ** words category/sentiment (for example for word count)
     * different-conversations comparison
+    * option of using normal login for facebook, then collect needed info (try mechanize)
 
 ## License
 

@@ -13,17 +13,7 @@ SAVE_PLOT = True
 
 #TODO use K for diagrams, vertical lines separate between senders
 
-def plotSingleBasicLengthStatByYearAndMonth(data, stat, yearToShow=None):
-    figureAesthetic()
-    def plot(ax, df, count):
-        ax = sns.barplot(x="month", y="lenMsgs", hue="sender", data=df, ax=ax)
-        ax.set(ylabel=stat if count == 1 else '')
-
-    _plotByYear(data, stat, plot, yearToShow)
-
 def plotBasicLengthStatsByYearAndMonth(data, yearsToShow=[]):
-    #figureAesthetic()
-    sns.set_context("poster")
     #sns.plt.title('Basic Length Stats')
 
     df = data[data['year'].isin(yearsToShow)]
@@ -33,11 +23,12 @@ def plotBasicLengthStatsByYearAndMonth(data, yearsToShow=[]):
     df = df.reset_index()
     df.columns.values[3] = 'stat'
     df.columns.values[4] = 'val'
-    g = sns.FacetGrid(df, col='year', row='stat', margin_titles=False, sharey=False)
-    g.map(sns.barplot, 'month', 'val', 'sender')
-    g.add_legend()
+    g = sns.factorplot(x="month", y="val", row="stat", hue='sender', col='year', data=df,
+                       kind="bar", sharey=False,
+                        size=3, aspect=2.5)
     sns.plt.show()
 
+#TODO FIX too complex visualization
 def plotBasicLengthStatsByMonthAndHourForYear(data, yearToShow):
     #figureAesthetic()
     sns.set_context("poster")
@@ -57,6 +48,14 @@ def plotBasicLengthStatsByMonthAndHourForYear(data, yearToShow):
         g.map(sns.barplot, 'hour', 'val', 'sender')
         g.add_legend()
     sns.plt.show()
+
+def plotSingleBasicLengthStatByYearAndMonth(data, stat, yearToShow=None):
+    figureAesthetic()
+    def plot(ax, df, count):
+        ax = sns.barplot(x="month", y="lenMsgs", hue="sender", data=df, ax=ax)
+        ax.set(ylabel=stat if count == 1 else '')
+
+    _plotByYear(data, stat, plot, yearToShow)
 
 def plotSingleBasicLengthStatByHour(data, stat):
     figureAesthetic()
@@ -86,7 +85,9 @@ def plotSingleBasicLengthStatHeatmap(data, stat, yearsToShow=[]):
     def plot(ax, df, count):
         df = df.pivot('month', 'day', stat)
         ax = sns.heatmap(df, mask=df.isnull(), ax=ax)
-        ax.set(ylabel=stat if count == 1 else '')
+        #ax.set(ylabel=stat if count == 1 else '')
+        ax.set(ylabel='month' if count == 1 else '')
+        ax.set_title(stat)
         #sns.heatmap(df, mask=df.notnull(), cmap=ListedColormap(['red', 'blue']), cbar=False)
 
     _plotByYear(data, stat, plot, yearsToShow)
@@ -120,6 +121,7 @@ def plotWordsUsage(data, words, yearsToShow=[]):
     figureAesthetic()
     def plot(ax, df, count):
         sns.pointplot(x="month", y="total", hue='word', data=df, ax=ax)
+        ax.set(ylabel='total count' if count == 1 else '')
         #sns.tsplot(data=df, time='month', value='total', condition='word', ax=ax)
         #df.plot(x='month', y='total', c='word', ax=ax)
 
@@ -167,12 +169,35 @@ def plotZipfLaw(words, count):
 
 def plotRichnessVariation(data, yearsToShow=[]):
     figureAesthetic()
+    max_val = data['lexicalRichness'].max()
+    min_val = data['lexicalRichness'].min()
     def plot(ax, df, count):
         ax = sns.pointplot(data=df, y='lexicalRichness', x='month', hue='sender', ax=ax)
-        ax.set_ylim([0, 1])
+        ax.set_ylim([min_val - 0.1, max_val + 0.1])
         ax.set(ylabel='lexical richness (%)' if count == 1 else '')
 
     _plotByYear(data, 'Vocabulary Richness', plot, yearsToShow)
+
+def plotSentimentStatsByHour(sentimentStats, valueNames):
+    data = _transformSentimentStats(sentimentStats, valueNames, ['sender', 'hour'])
+    ax = sns.factorplot(x="hour", y="val", col="emotion", hue='sender',
+                   data=data, kind="point", sharey=False)
+    ax.set(ylabel='mean(val)')
+    sns.plt.show()
+
+def plotSentimentStatsByYearAndMonth(sentimentStats, valueNames):
+    data = _transformSentimentStats(sentimentStats, valueNames, ['sender', 'year', 'month'])
+    sns.factorplot(x="month", y="val", row="emotion", hue='sender', col='year',
+                   data=data, kind="point", sharey=False)
+    sns.plt.show()
+
+def _transformSentimentStats(sentimentStats, valueNames, groupByColumns, aggFun='mean'):
+    data = sentimentStats.groupby(groupByColumns).agg(dict([(x, aggFun) for x in valueNames]))
+    data = data.stack().reset_index()
+    data.columns.values[len(groupByColumns)] = 'emotion'
+    data.columns.values[len(groupByColumns)+1] = 'val'
+
+    return data
 
 #TODO refactor
 def plotDaysWithoutMessages(conv):

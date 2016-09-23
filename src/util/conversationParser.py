@@ -1,10 +1,10 @@
 import argparse
 import json
 import sys
+import os
 import time
 
-from os.path import dirname
-sys.path.append(dirname(__file__)+"\\..")
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from util import logger
 
 

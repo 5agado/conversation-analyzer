@@ -10,7 +10,6 @@ from os.path import dirname
 sys.path.append(dirname(__file__)+"\\..")
 from util import logger
 
-
 def parseMessagesFromFile(filePath, limit=0, startDate=None, endDate=None):
     messages = []
     senders = set([])

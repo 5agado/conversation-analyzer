@@ -78,14 +78,16 @@ class ConvStatsDataframe(IConvStats):
 
     #TODO consider option of having 0 if the word does not appear for a specific sender
     def _generateWordCountStatsBy(self, groupByColumns=[], word=None):
-        fun = lambda x: sorted(statsUtil.getWordsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True)
+        fun = lambda x: tuple(sorted(
+            statsUtil.getWordsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True))
         label = 'wordCount'
         countId = 'word'
         results = self._generateCountStatsBy(fun, label, countId, groupByColumns, word)
         return results
 
     def _generateEmoticonCountStatsBy(self, groupByColumns=[], emoticon=None):
-        fun = lambda x: sorted(statsUtil.getEmoticonsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True)
+        fun = lambda x: tuple(sorted(
+            statsUtil.getEmoticonsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True))
         label = 'emoticonCount'
         countId = 'emoticon'
         results = self._generateCountStatsBy(fun, label, countId, groupByColumns, emoticon)
@@ -105,7 +107,6 @@ class ConvStatsDataframe(IConvStats):
         results = self._generateCountStatsBy(fun, label, countId, groupByColumns, trigram).sort_values("tf-isf", ascending=False)
         return results
 
-    #TODO might be merged with previous, just few keywords differ
     def _generateCountStatsBy(self, aggFun, label, countId, groupByColumns=[], token=None):
         res = self.df.rename(columns={'text':label})
         res = res.groupby(['sender'] + groupByColumns, as_index=False).agg({label : aggFun})
@@ -142,7 +143,8 @@ class ConvStatsDataframe(IConvStats):
     def _generateLexicalStatsBy(self, groupByColumns=[]):
         res = self.df.rename(columns={'text':'text'})
         #enough, probably the best is to make another simpler method in statsUtil
-        res = res.groupby(['sender'] + groupByColumns, as_index=False).agg({'text' : lambda x: statsUtil.getWords(" ".join(x))})
+        res = res.groupby(['sender'] + groupByColumns, as_index=False).agg(
+            {'text' : lambda x: tuple(statsUtil.getWords(" ".join(x)))})
         res['tokensCount'] = res['text'].apply(lambda x: len(x))
         res['vocabularyCount'] = res['text'].apply(lambda x: len(set(x)))
 

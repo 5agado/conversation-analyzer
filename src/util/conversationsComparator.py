@@ -54,7 +54,7 @@ def init(_):
     parser.add_argument('-p1', metavar='conversation1filePath', dest='filepath1', required=True)
     parser.add_argument('-p2', metavar='conversation2filePath', dest='filepath2', required=True)
     parser.add_argument('-s', metavar='startDate', dest='startDate', required=True)
-    parser.add_argument('-s', metavar='endDate', dest='endDate', required=True)
+    parser.add_argument('-e', metavar='endDate', dest='endDate', required=True)
 
     args = parser.parse_args()
     filepath1 = args.filepath1
