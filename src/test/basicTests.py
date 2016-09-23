@@ -16,6 +16,7 @@ from util import statsUtil
 
 from matplotlib import animation
 from stats.iConvStats import IConvStats
+import pandas as pd
 
 
 
@@ -55,8 +56,8 @@ def init(_):
 
     res = conv.messages.rename(columns={'text':'numMsgs'})
     res['lenMsgs'] = res['numMsgs'].apply(lambda x: len(x))
-    sns.stripplot(x='hour', y='lenMsgs', data=res)
-    plt.show()
+    x = pd.to_numeric(res['hour'])
+    testCorrelation(x, res['lenMsgs'])
     #testAnimation(conv)
 
     #sentences = mnlp.sentenceSegmentation(conv.getEntireConvText())
@@ -68,6 +69,11 @@ def init(_):
     #mio.showConcordance(conv, "phone")
     #tokens = nltk.word_tokenize(rawText)
     #words = [w.lower() for w in tokens]
+
+def testCorrelation(x, y):
+    print(np.corrcoef(x, y)[0, 1])
+    sns.regplot(x=x, y=y)
+    plt.show()
 
 def saveBunchOfStatsDf(conv):
     statsList = [IConvStats.STATS_NAME_BASICLENGTH, IConvStats.STATS_NAME_LEXICAL,

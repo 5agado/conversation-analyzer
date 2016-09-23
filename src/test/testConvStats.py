@@ -5,6 +5,8 @@ from pandas import Timestamp
 
 import util.io as mio
 from model.conversationDataframe import ConversationDataframe
+from stats.iConvStats import IConvStats
+import numpy as np
 
 
 class BasicStatsTestCase(unittest.TestCase):
@@ -81,13 +83,12 @@ class BasicStatsTestCase(unittest.TestCase):
         self.assertEqual(vocabularyCount, 17)
         self.assertEqual(lexicalRichness, vocabularyCount/tokensCount)
 
-    #todo test other combinations of S1 and S2
-    #def test_delayStats(self):
-    #    conv = self.getConversation(mio.getResourcesPath() + "\\unittest\\test_delay_conv.txt")
-    #    _, senderDelay = conv.stats.getDelayStatsByLength()
-    #
-    #    self.assertEqual(senderDelay['S1:S2'], [(24, 8), (86, 2)])
-    #    self.assertEqual(senderDelay['S2:S1'], [(24, 36007), (4, 1)])
+    def test_delayStats(self):
+       conv = self.getConversation(mio.getResourcesPath() + "\\unittest\\test_delay_conv.txt")
+       df = conv.stats.generateStats(IConvStats.STATS_NAME_DELAY)
+
+       self.assertEqual(df.loc['S1'].values[0], (np.timedelta64(10, 'h')+np.timedelta64(8, 's')))
+       self.assertEqual(df.loc['S2'].values[0], np.timedelta64(10, 's'))
 
 if __name__ == '__main__':
     unittest.main()

@@ -7,15 +7,14 @@ import numpy as np
 import pandas as pd
 
 from model.message import Message
-from stats.iConvStats import IConvStats
 from util import statsUtil
 
 #----------------------------#
 #         DEPRECATED         #
 #----------------------------#
-class ConvStats(IConvStats):
+class ConvStats:
     def __init__(self, conversation):
-        super().__init__(conversation)
+        self.conversation = conversation
 
     def getBasicLengthStats(self, sender=None):
         if not sender:
@@ -67,7 +66,7 @@ class ConvStats(IConvStats):
 
     @staticmethod
     def _getWordsCountStats(messages, limit = 0):
-        wCount = IConvStats.getWordsCount(messages)
+        wCount = statsUtil.getWordsCount(messages)
 
         if limit == 0:
             return wCount.most_common()
@@ -101,12 +100,12 @@ class ConvStats(IConvStats):
         return df
 
     def generateDataFrameSingleWordCountBy(self, mFun, word):
-        agglomeratedMessages = IConvStats._getMessagesBy(mFun, self.conversation.messages)
+        agglomeratedMessages = ConvStats._getMessagesBy(mFun, self.conversation.messages)
         df = self._generateDataFrameAgglomeratedStatsBy(mFun, agglomeratedMessages)
 
-        wOcc1 = [(d, IConvStats.getWordsCount(list(filter(lambda m: m.sender == self.conversation.sender1, a))))
+        wOcc1 = [(d, statsUtil.getWordsCount(list(filter(lambda m: m.sender == self.conversation.sender1, a))))
                              for d, a in agglomeratedMessages.items()]
-        wOcc2 = [(d, IConvStats.getWordsCount(list(filter(lambda m: m.sender == self.conversation.sender2, a))))
+        wOcc2 = [(d, statsUtil.getWordsCount(list(filter(lambda m: m.sender == self.conversation.sender2, a))))
                              for d, a in agglomeratedMessages.items()]
 
         s1Count = [count[word] if word in count else (by, 0) for (by, count) in wOcc1]
@@ -141,8 +140,8 @@ class ConvStats(IConvStats):
         return numEmoticons
 
     def generateDataFrameEmoticonsStatsBy(self, mFun):
-        agglomeratedMessages = IConvStats._getMessagesBy(mFun, self.conversation.messages)
-        df = self.generateDataFrameAgglomeratedStatsBy(mFun, agglomeratedMessages)
+        agglomeratedMessages = ConvStats._getMessagesBy(mFun, self.conversation.messages)
+        df = self._generateDataFrameAgglomeratedStatsBy(mFun, agglomeratedMessages)
 
         emoticonStatsS1 = [ConvStats._getEmoticonsStats(list(filter(lambda m: m.sender == self.conversation.sender1, a)))
                                  for _, a in agglomeratedMessages.items()]
@@ -212,13 +211,13 @@ class ConvStats(IConvStats):
 
     def getWordsUsedJustByStats(self):
         wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2 = \
-            ConvStats._getWordsMentioningStats(self.conversation.sender1Messages, self.conversation.sender2Messages)
+            ConvStats._getWordsUsedJustByStats(self.conversation.sender1Messages, self.conversation.sender2Messages)
         return wordsSaidByBoth, wordsSaidJustByS1, wordsSaidJustByS2
 
     @staticmethod
     def _getWordsUsedJustByStats(sender1Messages, sender2Messages):
-        wordsSaidBySender1 = IConvStats.getWordsCount(sender1Messages).keys()
-        wordsSaidBySender2 = IConvStats.getWordsCount(sender2Messages).keys()
+        wordsSaidBySender1 = statsUtil.getWordsCount(sender1Messages).keys()
+        wordsSaidBySender2 = statsUtil.getWordsCount(sender2Messages).keys()
         wordsSaidByBoth = set(wordsSaidBySender1).intersection(wordsSaidBySender2)
         wordsSaidJustByS1 = set(wordsSaidBySender1).difference(wordsSaidBySender2)
         wordsSaidJustByS2 = set(wordsSaidBySender2).difference(wordsSaidBySender1)
