@@ -72,6 +72,8 @@ Related classes are in the *stats* folder. The suggested and maintained class to
 * **Sentiment Analysis** (joy, anger, disgust, fear values via [IBM Watson Tone Analyzer Service](http://www.ibm.com/watson/developercloud/tone-analyzer.html))
 
 ##TODO
+	* refactor code based on new knowledge (e.g. tf-idf)
+	* new words by month, word occurences change (by month/week) [check notes]
     * different-conversations comparison
     * option of using normal login for facebook, then collect needed info (try mechanize)
 
