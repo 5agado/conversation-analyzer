@@ -19,7 +19,7 @@ class ConversationScraper:
     CONVERSATION_ENDMARK = "end_of_history"
 
     def __init__(self, convID, cookie, fb_dtsg, outDir):
-        self._directory = outDir + "/" + str(convID) + "/"
+        self._directory = os.path.join(outDir,str(convID))
         self._convID = convID
         self._cookie = cookie
         self._fb_dtsg = fb_dtsg
@@ -102,9 +102,9 @@ class ConversationScraper:
         return  msgsData
 
     def writeMessages(self, messages):
-        with open(self._directory + "conversation.json", 'w') as conv:
+        with open(os.path.join(self._directory,"conversation.json"), 'w') as conv:
             conv.write(json.dumps(messages))
-        command = "python -mjson.tool " + self._directory + "conversation.json > " + self._directory + "conversation.pretty.json"
+        command = "python -mjson.tool " + os.path.join(self._directory, "conversation.json") + "  > " + os.path.join(self._directory, "conversation.pretty.json")
         os.system(command)
 
     def scrapeConversation(self, merge, offset, timestampOffset, chunkSize, limit, isGroupConversation):
