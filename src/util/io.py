@@ -106,16 +106,22 @@ def printEmoticonsStats(emoticonsStatsDf):
 
 def printWordsBySender(conv):
     data = conv.stats.getWordsBySender()
+    statsFolder = os.path.dirname(conv.filepath) + '\\stats'
+    if not os.path.exists(statsFolder):
+        os.makedirs(statsFolder)
     for sender in conv.senders:
         words = data[sender]
-        printListToFile(words, conv.statsFolder + "\\wordsUsedBy" + sender + ".txt",
+        printListToFile(words, statsFolder + "\\wordsUsedBy" + sender + ".txt",
                     "#Words by Relevance")
 
 def printWordsUsedJustByToFile(conv):
     data = conv.stats.getWordsBySender(usedJustBy=True)
+    statsFolder = os.path.dirname(conv.filepath) + '\\stats'
+    if not os.path.exists(statsFolder):
+        os.makedirs(statsFolder)
     for sender in conv.senders:
         wordsSaidJustBySender = data[sender]
-        printListToFile(wordsSaidJustBySender, conv.statsFolder + "\\wordsSaidJustBy" + sender + ".txt",
+        printListToFile(wordsSaidJustBySender, statsFolder + "\\wordsSaidJustBy" + sender + ".txt",
                     "#Words said just by " + sender)
 
 def printDelayStatsFor(conv):

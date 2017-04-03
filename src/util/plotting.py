@@ -9,7 +9,7 @@ import seaborn as sns
 import util.io as mio
 from model.message import Message
 
-SAVE_PLOT = True
+SAVE_PLOT = False
 
 #TODO use K for diagrams, vertical lines separate between senders
 
@@ -92,56 +92,28 @@ def plotSingleBasicLengthStatHeatmap(data, stat, yearsToShow=[]):
 
     _plotByYear(data, stat, plot, yearsToShow)
 
-def plotSingleWordUsage(data, word, yearsToShow=[]):
-    figureAesthetic()
+#----------------------------#
+#       WORDS USAGE
+#----------------------------#
+
+# TODO fill all possible values for the index (dates, month, year)
+# Add sender or total labels
+def plotWordsCount(wordsCountStats, words, sender=None, yearsToShow=None):
+    data = wordsCountStats.getWordsCount(words, sender)
+    if data is None:
+        return
     def plot(ax, df, count):
-        ax = sns.boxplot(x="month", y="count", hue="sender", data=df, ax=ax)
-        ax.set(ylabel='lexical richness (%)' if count == 1 else '')
-        #sns.despine(offset=10, trim=True)
+        df.reset_index(level='year').plot(ax=ax)
 
-    #def plot(ax, df):
-    #    sns.swarmplot(x="month", y="word", hue='sender', data=df, ax=ax)
+    #data.columns.name = 'words'
+    #data = data.stack()
+    #data.name = 'count'
 
-    _plotByYear(data, 'Word count for ' + word, plot, yearsToShow)
-
-def plotWordsUsageByHour(data, words, yearsToShow=[]):
-    #figureAesthetic()
-
-    data = data[data['word'].isin(words)]
-    #plt.title("Word Count by Hour")
-    #sns.violinplot(x="hour", y="word", hue='sender', scale="count", data=data)
-    #sns.pointplot(x="hour", y="total", hue='word', data=data)
-
-    g = sns.FacetGrid(data, row='word', margin_titles=True, sharey=False, sharex=False)
-    g.map(sns.pointplot, 'hour', 'count', 'sender')
-    g.add_legend()
-    sns.plt.show()
-
-def plotWordsUsage(data, words, yearsToShow=[]):
-    figureAesthetic()
-    def plot(ax, df, count):
-        sns.pointplot(x="month", y="total", hue='word', data=df, ax=ax)
-        ax.set(ylabel='total count' if count == 1 else '')
-        #sns.tsplot(data=df, time='month', value='total', condition='word', ax=ax)
-        #df.plot(x='month', y='total', c='word', ax=ax)
-
-    #def plot(ax, df, count):
-    #    sns.violinplot(x='month', y="word", hue='sender', ax=ax, data=df)
-
-
-    #def plot(ax, df):
-    #    g = sns.FacetGrid(df, row='word', margin_titles=True, sharey=True, sharex=True)
-    #    g.map(sns.barplot, 'month', 'count', 'sender')
-    #    g.add_legend()
-
-    # def plot(ax, df):
-    #     df = df.drop('year', 1)
-    #     print(df.head())
-    #     g = sns.PairGrid(df.sort_values("total", ascending=False),
-    #              x_vars=set(df.month.values), y_vars=["words"])
-    #     g.map(sns.stripplot)
-
-    _plotByYear(data[data['word'].isin(words)], 'Word count', plot, yearsToShow)
+    if 'year' in list(data.index.names):
+        _plotByYear(data, 'Word count', plot, yearsToShow)
+    else:
+        data.plot()
+        sns.plt.show()
 
 def plotZipfLaw(words, count):
     figureAesthetic()
@@ -219,9 +191,12 @@ def figureAesthetic():
     sns.set_style("darkgrid")
     sns.plt.grid(True)
 
-def _plotByYear(data, title, plotFun, yearsToShow=[]):
+def _plotByYear(data, title, plotFun, yearsToShow=None):
     plt.title(title)
-    grouped = data.groupby('year')
+    if 'year' in list(data.index.names):
+        grouped = data.groupby(level='year')
+    else:
+        grouped = data.groupby('year')
     numberOfYears = len(grouped) if not yearsToShow else len(yearsToShow)
     count = 1
     fig = plt.figure(1)

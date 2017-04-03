@@ -5,12 +5,13 @@ import seaborn as sns
 import util.io as mio
 import util.plotting as mplot
 from model.conversationDataframe import ConversationDataframe
+from stats.wordsCountStats import WordsCountStats
 from stats.iConvStats import IConvStats
 
 
 class PlottingTestCase(unittest.TestCase):
     TEST_FILE = "\\unittest\\test_plotting.txt"
-    anonymise = True
+    anonymise = False
 
     @classmethod
     def setUpClass(cls):
@@ -66,19 +67,24 @@ class PlottingTestCase(unittest.TestCase):
         data = self.conv.stats.generateStatsByYearAndMonth(IConvStats.STATS_NAME_LEXICAL)
         mplot.plotRichnessVariation(data)
 
-    def test_singleWordUsage(self):
-        word = "the"
-        data = self.conv.stats.generateStatsByYearMonthDay(IConvStats.STATS_NAME_WORDCOUNT, word=word)
-        data = data.reset_index()
-        mplot.plotSingleWordUsage(data, word, ['2014'])
-
-    def test_wordUsage(self):
+    def test_wordsUsageByDate(self):
         words = ['the', 'hello', 'a', 'when']
-        data = self.conv.stats.generateStatsByYearMonthDay(IConvStats.STATS_NAME_WORDCOUNT)
-        #data = data.drop(['sender', 'count', 'frequency'], 1)
-        data = data.reset_index()
-        mplot.plotWordsUsage(data, words, ['2014'])
-        #mplot.plotWordsUsageByHour(data, words, ['2014'])
+        conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
+        stats = WordsCountStats(conv)
+        stats.loadWordsCount(['date'])
+        mplot.plotWordsCount(stats, words)
+        mplot.plotWordsCount(stats, words, 's1')
+        mplot.plotWordsCount(stats, words, 's2')
+        #mplot.plotWordsCount(stats, words, ['2014'])
+
+    def test_wordUsageByHourAndYear(self):
+        words = ['the', 'hello', 'a', 'when']
+        conv = self.getConversation(mio.getResourcesPath() + PlottingTestCase.TEST_FILE)
+        stats = WordsCountStats(conv)
+        stats.loadWordsCount(['month', 'year'])
+        mplot.plotWordsCount(stats, words)
+        mplot.plotWordsCount(stats, words, 's1')
+        mplot.plotWordsCount(stats, words, 's2')
 
     def test_wordFrequency(self):
         df = self.conv.stats.generateStatsByHour(IConvStats.STATS_NAME_WORDCOUNT)

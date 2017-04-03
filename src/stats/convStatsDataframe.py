@@ -6,6 +6,7 @@ import pandas as pd
 
 from model.message import Message
 from stats.iConvStats import IConvStats
+from stats.wordsCountStats import WordsCountStats
 from util import statsUtil
 
 
@@ -38,13 +39,15 @@ class ConvStatsDataframe(IConvStats):
             return res[['numMsgs', 'lenMsgs', 'avgLen']]
 
     #TODO consider option of having 0 if the word does not appear for a specific sender
-    def _generateWordCountStatsBy(self, groupByColumns=[], word=None):
-        fun = lambda x: tuple(sorted(
-            statsUtil.getWordsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True))
-        label = 'wordCount'
-        countId = 'word'
-        results = self._generateCountStatsBy(fun, label, countId, groupByColumns, word)
-        return results
+    def _generateWordCountStatsBy(self, groupByColumns=None):
+        stats = WordsCountStats(self.conversation)
+        stats.loadWordsCount(groupByColumns)
+        #fun = lambda x: tuple(sorted(
+        #statsUtil.getWordsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True))
+        #label = 'wordCount'
+        #countId = 'word'
+        #results = self._generateCountStatsBy(fun, label, countId, groupByColumns, word)
+        return stats
 
     def _generateEmoticonCountStatsBy(self, groupByColumns=[], emoticon=None):
         fun = lambda x: tuple(sorted(
@@ -207,22 +210,6 @@ class ConvStatsDataframe(IConvStats):
         else:
             tokensCount, vocabularyCount, lexicalRichness = lexicalStatsDf.loc[sender].tolist()
         return tokensCount, vocabularyCount, lexicalRichness
-
-    def getWordCountStats(self, sender=None, limit=0, word=None):
-        wordsCountStatsDf = self.generateStats(IConvStats.STATS_NAME_WORDCOUNT, word=word)
-        if sender:
-            wCount = wordsCountStatsDf[wordsCountStatsDf['sender']==sender]
-        else:
-            wCount = pd.DataFrame(wordsCountStatsDf['total']).drop_duplicates(keep='last')
-        if word:
-            val = wCount['count' if sender else 'total'].values
-            return 0 if not val else val[0]
-        else:
-            if limit != 0:
-                return [(w, row[0]) for w, row in wCount.iterrows()][:limit]
-            else:
-                return [(w, row[0]) for w, row in wCount.iterrows()]
-        return  wCount
 
     def getEmoticonsStats(self, sender=None):
         emoticonStatsDf = self.generateStats(IConvStats.STATS_NAME_EMOTICONS)

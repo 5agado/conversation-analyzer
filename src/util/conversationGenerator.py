@@ -12,11 +12,13 @@ import logging
 import argparse
 
 #Need to download the gutenberg corpus via nltk.download()
-def generateNewConversation(numMsgs, startDate, endDate, senders, minWords, maxWords):
+def generateRandomMessageNLTK(minWords, maxWords):
+    # text = nltk.corpus.gutenberg.raw(random.choice(nltk.corpus.gutenberg.fileids()))
     words = nltk.corpus.gutenberg.words(random.choice(nltk.corpus.gutenberg.fileids()))
-    #text = nltk.corpus.gutenberg.raw(random.choice(nltk.corpus.gutenberg.fileids()))
-    #print(words[:10])
 
+    return ' '.join([random.choice(words) for _ in range(random.randint(minWords, maxWords))])
+
+def generateNewConversation(numMsgs, startDate, endDate, senders, genTextFun):
     messages = []
     start = datetime.strptime(startDate, Message.DATE_TIME_FORMAT)
     end = datetime.strptime(endDate, Message.DATE_TIME_FORMAT)
@@ -27,7 +29,7 @@ def generateNewConversation(numMsgs, startDate, endDate, senders, minWords, maxW
         date = datetime.strftime(randTime, Message.DATE_FORMAT)
         time = datetime.strftime(randTime, Message.TIME_FORMAT)
         sender = random.choice(senders)
-        text = ' '.join([random.choice(words) for _ in range(random.randint(minWords, maxWords))])
+        text = genTextFun()
         messages.append(Message(date, time, sender, text))
     messages.sort(key=lambda x: x.datetime)
     return messages
@@ -60,7 +62,8 @@ def main(_):
     minWords = args.minWords
     maxWords = args.maxWords
     authors = args.authors
-    conv = generateNewConversation(numMsgs, startDate, endDate, authors, minWords, maxWords)
+    conv = generateNewConversation(numMsgs, startDate, endDate, authors,
+                                   lambda: generateRandomMessageNLTK(minWords, maxWords))
     mio.printListToFile(conv, filepath)
 
 if __name__ == "__main__":

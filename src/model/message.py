@@ -32,3 +32,4 @@ class Message:
 
     def __str__(self):
         return "{} {} {}".format(self.datetime, self.sender, self.text)
+

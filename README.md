@@ -11,7 +11,7 @@ Conversation format example (based on the current parser):
     2012.06.17 15:27:42 SENDER_1 Message text from sender1
     2012.06.18 17:27:42 SENDER_2 Message text from sender2
 
-##Usage
+## Usage
 Each of the three components (i.e. scraper, parser, analyzer) can be run separately. 
 The analyzer can be accessed via the *main.py* script contained in the *src* folder. It will log a set of basic stats for the overall conversation.
 Scraper ( *conversationScraper.py* ) and parser ( *conversationParser.py* ) are instead inside the *util* folder. 
@@ -20,10 +20,10 @@ For each see the help menu (-h or --help) for a detailed usage description.
 
 Basic configurations for all modules can be managed via the *config.ini* file. The location of the config file to be used should be passed via *--config* argument.   
 
-###Requirements
+### Requirements
 The only additional requirement for parser and scraper is the *requests* package. For the analyzer I used Conda; *requirements.txt* is the exported environment file. See [here](http://conda.pydata.org/docs/using/envs.html#share-an-environment) for a guide on how to manage Conda environments.
 
-##Scraper
+## Scraper
 In order to access Facebook conversations the following parameters are required: *cookie* and *fb_dtsg* and conversation ID.
 
 Such data can be found via the following procedure:
@@ -38,13 +38,13 @@ Once the values of *cookie* and *fb_dtsg* have been copied in the *config.ini* f
 If you want to scrape a group conversation, use the *-g* flag, the scraper will not work otherwise.
 Via the *-m* flag new messages can be merged with the previously scraped part of the same conversation, if present.
 
-##Parser
+## Parser
 To run the parser just provide as arguments the path of the scraped-conversation file and the desired path for the parsed output.
 Additionally, via *--authors*, you can pass a dictionary like structure to provide a correspondence between the profile IDs and preferred aliases. This will produce a more readable output. Example usage:
 
     --authors "{"11234":"SENDER_1", "112345":"SENDER_2"}"
 
-##Analyzer
+## Analyzer
 **The analyzer is still a work in progress.**
 
 I have added a **ipython notebook for easier exploration of the various statistics and analytical results**. Just check out the *conversation-analyzer.ipynb* in the top-level folder. I have left previous outputs as examples, but I encourage you to explore your own data and tweak the stats and plots based on your preferences. If you are not familiar or not willing to check out the notebook, you can still access the old *main.py* for automatic stats running. It requires as parameter the filepath of the conversation to be analyzed; it will then log and generate a set of basic stats for the overall conversation.
@@ -71,9 +71,7 @@ Related classes are in the *stats* folder. The suggested and maintained class to
 
 * **Sentiment Analysis** (joy, anger, disgust, fear values via [IBM Watson Tone Analyzer Service](http://www.ibm.com/watson/developercloud/tone-analyzer.html))
 
-##TODO
-	* refactor code based on new knowledge (e.g. tf-idf)
-	* new words by month, word occurences change (by month/week) [check notes]
+## TODO
     * different-conversations comparison
     * option of using normal login for facebook, then collect needed info (try mechanize)
 

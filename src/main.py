@@ -52,9 +52,11 @@ def main(_):
         mio.printLexicalStats(stats)
 
     if P_WORDS_COUNT:
-        filepath = conv.statsFolder + '\\' + 'wordCount.txt'
+        statsFolder = os.path.dirname(conv.filepath) + '\\stats'
+        if not os.path.exists(statsFolder):
+            os.makedirs(statsFolder)
         stats = conv.stats.generateStats(IConvStats.STATS_NAME_WORDCOUNT)
-        mio.printDataFrameToFile(stats, filepath)
+        mio.printDataFrameToFile(stats, statsFolder + '\\' + 'wordCount.txt')
 
     #Works just with two senders
     if P_WORDS_USEDJUSTBY:

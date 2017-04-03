@@ -6,6 +6,7 @@ from pandas import Timestamp
 import util.io as mio
 from model.conversationDataframe import ConversationDataframe
 from stats.iConvStats import IConvStats
+from stats.wordsCountStats import WordsCountStats
 import numpy as np
 
 
@@ -56,13 +57,31 @@ class BasicStatsTestCase(unittest.TestCase):
 
     def test_singleWordCount(self):
         conv = self.getConversation(mio.getResourcesPath() + "\\unittest\\test_word_count.txt")
-        totalCount = conv.stats.getWordCountStats(word='hello')
-        s1Count = conv.stats.getWordCountStats(word='hello', sender='S1')
-        s2Count = conv.stats.getWordCountStats(word='hello', sender='S2')
+        stats = conv.stats.generateStats(IConvStats.STATS_NAME_WORDCOUNT)
+        totalCount = stats.getWordsCount(['hello']).values[0]
+        s1Count = stats.getWordsCount(['hello'], 'S1').values[0]
+        s2Count = stats.getWordsCount(['hello'], 'S2').values[0]
 
         self.assertEqual(totalCount, 3)
         self.assertEqual(s1Count, 2)
         self.assertEqual(s2Count, 1)
+
+    def test_firstAndLastOccurences(self):
+        conv = self.getConversation(mio.getResourcesPath() + "\\unittest\\test_words_trends.txt")
+        stats = WordsCountStats(conv)
+        stats.loadWordsCount(['date'])
+
+        # Present word, total
+        res = stats.getWordFirstAndLastOccurences('dog')
+        self.assertEqual(res, ('2015.10.04', '2015.10.04'))
+
+        # Present word, sender specified
+        res = stats.getWordFirstAndLastOccurences('dog', 'S1')
+        self.assertEqual(res, ('2015.10.04', '2015.10.04'))
+
+        # Word not present
+        res = stats.getWordFirstAndLastOccurences('log', 'S1')
+        self.assertEqual(res, (-1, -1))
 
     def test_wordsUsedJustByStats(self):
         conv = self.getConversation(mio.getResourcesPath() + "\\unittest\\test_word_count.txt")

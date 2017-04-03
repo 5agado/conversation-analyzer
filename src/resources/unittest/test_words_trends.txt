@@ -1,0 +1,11 @@
+2014.09.27 15:27:42 S1 Hello My name is Sender1
+2014.09.27 15:27:50 S2 Hello My name is Sender2 xd
+2014.09.28 06:00:57 S1 Hello! How are you?
+2014.09.30 06:01:57 S2 Fine :D
+2014.09.30 06:01:58 S1 Bye
+2014.10.01 18:59:24 S1 Hello again, how are you today?
+2014.10.02 00:51:31 S2 great, I saw a brown fox
+2014.10.02 15:21:31 S1 sounds awesome
+2015.10.04 22:19:19 S1 no lazy dog?
+2015.10.04 08:39:35 S2 no
+2015.11.12 03:38:49 S1 ok, bye
