@@ -19,10 +19,7 @@ def plotBasicLengthStatsByYearAndMonth(data, yearsToShow=[]):
     df = data[data['year'].isin(yearsToShow)]
     df = df.set_index(['year', 'month', 'sender'])
 
-    df = df.stack()
-    df = df.reset_index()
-    df.columns.values[3] = 'stat'
-    df.columns.values[4] = 'val'
+    df = transformStats(df, 'stat', 'val')
     g = sns.factorplot(x="month", y="val", row="stat", hue='sender', col='year', data=df,
                        kind="bar", sharey=False,
                         size=3, aspect=2.5)
@@ -40,10 +37,7 @@ def plotBasicLengthStatsByMonthAndHourForYear(data, yearToShow):
             continue
         df = group.drop('year', 1)
         df = df.set_index(['hour', 'month', 'sender'])
-        df = df.stack()
-        df = df.reset_index()
-        df.columns.values[3] = 'stat'
-        df.columns.values[4] = 'val'
+        df = transformStats(df, 'stats', 'val')
         g = sns.FacetGrid(df, col='month', row='stat', margin_titles=True, sharey=False)
         g.map(sns.barplot, 'hour', 'val', 'sender')
         g.add_legend()
@@ -105,10 +99,6 @@ def plotWordsCount(wordsCountStats, words, sender=None, yearsToShow=None):
     def plot(ax, df, count):
         df.reset_index(level='year').plot(ax=ax)
 
-    #data.columns.name = 'words'
-    #data = data.stack()
-    #data.name = 'count'
-
     if 'year' in list(data.index.names):
         _plotByYear(data, 'Word count', plot, yearsToShow)
     else:
@@ -165,11 +155,23 @@ def plotSentimentStatsByYearAndMonth(sentimentStats, valueNames):
 
 def _transformSentimentStats(sentimentStats, valueNames, groupByColumns, aggFun='mean'):
     data = sentimentStats.groupby(groupByColumns).agg(dict([(x, aggFun) for x in valueNames]))
-    data = data.stack().reset_index()
-    data.columns.values[len(groupByColumns)] = 'emotion'
-    data.columns.values[len(groupByColumns)+1] = 'val'
+    data = transformStats(data, 'emotion', 'val')
 
     return data
+
+def transformStats(stats, statsName, valName):
+    """
+    Transform stats for plotting with stacking of current indexes
+    :param stats: df to transform
+    :param statsName: name to give to stats column (previously different column values)
+    :param valName: name to give to value column (previously cell values)
+    :return:
+    """
+    res = stats.stack().reset_index()
+    res.columns.values[-2] = statsName
+    res.columns.values[-1] = valName
+
+    return res
 
 #TODO refactor
 def plotDaysWithoutMessages(conv):
@@ -210,89 +212,7 @@ def _plotByYear(data, title, plotFun, yearsToShow=None):
     #savePlotAsImage(fig, "image.png")
     sns.plt.show()
 
-#TODO consider using directly plotHoursStats(data):
-#need to check saved data format
-# def plotHoursStatsFromFile(filepath):
-#     plotStatsFromFile(filepath, "Hours Stats", 3, 4, True)
-#
-# def plotMonthStatsFromFile(filepath):
-#     plotStatsFromFile(filepath, "Months Stats", 3, 4, True)
-#
-# def plotDayStatsFromFile(filepath):
-#     plotStatsFromFile(filepath, "Day Stats", 1, 2)
-#     plotStatsFromFile(filepath, "Day Stats", 3, 4)
-#     plotStatsFromFile(filepath, "Day Stats", 5, 6)
-#     plotStatsFromFile(filepath, "Day Stats", 7)
-#     plotStatsFromFile(filepath, "Day Stats", 8)
-#
-# def plotStatsFromFile(filepath, description, y1Idx, y2Idx=None, bar=False):
-#     data = mio.loadDataFromFile(filepath)
-#
-#     labels = ([])
-#     labels.append(list(data.columns.values)[0])
-#     labels.append(list(data.columns.values)[y1Idx])
-#
-#     x = np.arange(len(data.ix[:,0]))
-#     xLabels = data.ix[:,0]
-#     y1 = data.ix[:,y1Idx]
-#     y2 = None
-#
-#     if y2Idx:
-#         labels.append(list(data.columns.values)[y2Idx])
-#         y2 = data.ix[:,y2Idx]
-#
-#     if bar:
-#         plotStatsBars(description, labels, x, xLabels, y1, y2)
-#     else:
-#         plotStatsLines(description, labels, x, xLabels, y1, y2)
-#
-# def plotStatsBars(description, labels, x, xLabels, y1, y2):
-#     bar_width = 0.45
-#     preparePlot(description, labels[0], 'Count')
-#
-#     plt.bar(x, y1, bar_width, facecolor='#9999ff', edgecolor='white', label=labels[1])
-#
-#     if type(y2) != type(None):
-#         plt.bar(x+bar_width, y2, bar_width, facecolor='#ff9999', edgecolor='white', label=labels[2])
-#
-#
-#     plt.xticks(np.arange(len(x))+bar_width, xLabels)
-#
-#     #plt.xticks(np.arange(len(data)), xLabels)
-#
-#     #mean_line = ax1.plot(x,[y1.median() for i in x], label='Mean', linestyle='--')
-#     #mean_line = ax1.plot(x,[y2.mean() for i in x], label='Mean2', linestyle=':')
-#
-#     plt.legend(loc='upper center')
-#     plt.tight_layout()
-#     plt.show()
-#
-# def plotBasicLengthStatsPie(conv):
-#     totalNum, totalLength, avgLegth = conv.stats.getBasicLengthStats()
-#     totalNumS1, totalLengthS1, avgLegthS1 = conv.stats.getBasicLengthStats(conv.sender1)
-#     totalNumS2, totalLengthS2, avgLegthS2 = conv.stats.getBasicLengthStats(conv.sender2)
-#
-#     colors = [(152/255,233/255,138/255), (197/255,176/255,213/255)]
-#
-#     plt.figure(1)
-#     plt.subplot(121)
-#     plt.title('Number of Messages')
-#     sizes = [totalNumS1/totalNum, totalNumS2/totalNum]
-#     plt.pie(sizes, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
-#     plt.axis('equal')
-#
-#     plt.subplot(122)
-#     plt.title('Messages Total Length')
-#     sizes = [totalLengthS1/totalLength, totalLengthS2/totalLength]
-#     plt.pie(sizes, colors=colors, autopct='%1.1f%%', shadow=True, startangle=90)
-#     plt.axis('equal')
-#
-#     plt.legend([conv.sender1, conv.sender2], loc='lower right')
-#     plt.show()
-
 def plotStatsLines(description, labels, x, xLabels, y1, y2):
-    #preparePlot(description, labels[0], 'Count')
-
     figureAesthetic()
 
     sns.set_style("darkgrid")
@@ -307,11 +227,6 @@ def plotStatsLines(description, labels, x, xLabels, y1, y2):
     plt.legend()
     plt.gcf().autofmt_xdate()
     plt.show()
-
-def preparePlot(description, xLabel, yLabel):
-    plt.title(description)
-    plt.xlabel(xLabel)
-    plt.ylabel(yLabel)
 
 def savePlotAsImage(plot, filename):
     folderPath = os.path.join(mio.getResourcesPath(), 'imgs')

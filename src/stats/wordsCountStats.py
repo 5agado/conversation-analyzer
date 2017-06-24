@@ -29,7 +29,7 @@ class WordsCountStats:
         """
         Returns count for specified words.
         :param words: lookup words, if none return all present words
-        :param sender: if specified, just consider words occurences for such sender, otherwise consider all senders (total)
+        :param sender: if specified, just consider words occurrences for such sender, otherwise consider all senders (total)
         :return: a wordsCount dataframe
         """
         if not words:
@@ -109,7 +109,7 @@ class WordsCountStats:
     @staticmethod
     def _transformWordsCountBasedOnSender(wordsCount, sender=None):
         """
-        Transforms wordsCount. If sender extract data only for specified sender, it not sum over all senders.
+        Transforms wordsCount. If sender extract data only for specified sender, if not sum over all senders.
         Sender is check both on single and multi-index, if not present None is returned
         """
         # If sender, get words count for the specified sender

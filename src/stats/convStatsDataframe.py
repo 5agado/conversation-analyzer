@@ -38,15 +38,9 @@ class ConvStatsDataframe(IConvStats):
             res['avgLen'] = res['lenMsgs']/res['numMsgs']
             return res[['numMsgs', 'lenMsgs', 'avgLen']]
 
-    #TODO consider option of having 0 if the word does not appear for a specific sender
     def _generateWordCountStatsBy(self, groupByColumns=None):
         stats = WordsCountStats(self.conversation)
         stats.loadWordsCount(groupByColumns)
-        #fun = lambda x: tuple(sorted(
-        #statsUtil.getWordsCount(" ".join(x)).items(), key=lambda y: y[1], reverse=True))
-        #label = 'wordCount'
-        #countId = 'word'
-        #results = self._generateCountStatsBy(fun, label, countId, groupByColumns, word)
         return stats
 
     def _generateEmoticonCountStatsBy(self, groupByColumns=[], emoticon=None):
@@ -118,7 +112,6 @@ class ConvStatsDataframe(IConvStats):
             tot = res.groupby(groupByColumns, as_index=False).sum()
             tot['sender'] = "total"
             res = pd.concat([res, tot])
-            #TODO Missing tokencount = zero case
             res['lexicalRichness'] = res['vocabularyCount']/res['tokensCount']
             return res
         else:
