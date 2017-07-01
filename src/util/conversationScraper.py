@@ -113,10 +113,10 @@ class ConversationScraper:
         """
 
         if merge:
-            if not os.path.exists(self._directory + "conversation.json"):
+            if not os.path.exists(os.path.join(self._directory,"conversation.json")):
                 logger.error("Conversation not present. Merge operation not possible")
                 return
-            with open(self._directory + "conversation.json") as conv:
+            with open(os.path.join(self._directory,"conversation.json")) as conv:
                 convMessages = json.load(conv)
                 numMergedMsgs = 0
 
@@ -131,7 +131,7 @@ class ConversationScraper:
         while self.CONVERSATION_ENDMARK not in msgsData:
             requestChunkSize = chunkSize if limit <= 0 else min(chunkSize, limit-len(messages))
             reqData = self.generateRequestData(offset, timestamp, requestChunkSize, isGroupConversation)
-            logger.info("Retrieving messages " + str(offset) + "-" + str(requestChunkSize+offset))
+            logger.info("Retrieving messages {}-{}".format(offset, requestChunkSize+offset))
             msgsData = self.executeRequest(reqData)
             jsonData = json.loads(msgsData)
 
@@ -169,7 +169,7 @@ class ConversationScraper:
             else:
                 logger.error("Response error. Empty data or payload")
                 logger.error(msgsData)
-                logger.info("Retrying in " + str(self.ERROR_WAIT) + " seconds")
+                logger.info("Retrying in {} seconds".format(self.ERROR_WAIT))
                 time.sleep(self.ERROR_WAIT)
                 continue
 
@@ -208,8 +208,10 @@ def main(_):
                         help="specify if you want to scrape a group conversation")
     parser.set_defaults(merge=False)
     baseFolderPath = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
-    parser.add_argument('--out', metavar='outputDir', dest='outDir', default= baseFolderPath+'\\Messages')
-    parser.add_argument('--conf', metavar='configFilepath', dest='configFilepath', default= baseFolderPath+'\\config.ini')
+    parser.add_argument('--out', metavar='outputDir', dest='outDir',
+                        default=os.path.join(baseFolderPath, 'Messages'))
+    parser.add_argument('--conf', metavar='configFilepath', dest='configFilepath',
+                        default=os.path.join(baseFolderPath, 'config.ini'))
 
     args = parser.parse_args()
     convID = args.convID

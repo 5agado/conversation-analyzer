@@ -24,10 +24,11 @@ def parseMessage(msgData, authors):
         body = msgData["body"].replace("\n", " ")
         authorId = msgData["author"].split(":")[1]
         if authorId not in authors:
-            logger.warning("Missing value for author ID {}. Using directly the ID for all successive messages".format(authorId))
+            logger.warning("Missing value for author ID {}. "
+                           "Using directly the ID for all successive messages".format(authorId))
             authors[authorId] = str(authorId)
         author = authors[authorId]
-        message = str(dateAndTime) + " " + author + " " + body
+        message = "{} {} {}".format(dateAndTime, author ,body)
         return message
     except KeyError:
         logger.error("Parsing message. KeyError")
