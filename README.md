@@ -45,27 +45,25 @@ Additionally, via *--authors*, you can pass a dictionary like structure to provi
     --authors "{"11234":"SENDER_1", "112345":"SENDER_2"}"
 
 ## Analyzer
-**The analyzer is still a work in progress.**
+**I have added two Jupyter notebooks for easier exploration of the various statistics and analytical results**. Just check out [Basic Stats](Conversation%20Analyzer%20-%20Basic%20Stats) or [Words Stats](Conversation%20Analyzer%20-%20Words%20Stats). I have left previous outputs as examples, but I encourage you to explore your own data and tweak the stats and plots based on your preferences.
 
-I have added a **ipython notebook for easier exploration of the various statistics and analytical results**. Just check out the *conversation-analyzer.ipynb* in the top-level folder. I have left previous outputs as examples, but I encourage you to explore your own data and tweak the stats and plots based on your preferences. If you are not familiar or not willing to check out the notebook, you can still access the old *main.py* for automatic stats running. It requires as parameter the filepath of the conversation to be analyzed; it will then log and generate a set of basic stats for the overall conversation.
+If you are not familiar or not willing to check out the notebook, you can still access the old *main.py* for automatic stats running. It requires as parameter the filepath of the conversation to be analyzed; it will then log and generate a set of basic stats for the overall conversation.
 
-Related classes are in the *stats* folder. The suggested and maintained class to use is *convStatsDataframe*, that makes use of Pandas *Dataframe* for the stats generation. In the *test* package you can find unittests and example files that generate or plot different kind of statistics.
+### Conversation Stats List
 
-* **Conv Interval** (start date, end date, duration, days without messages)
+* **Interval Stats** (start/end date, duration, days without messages)
 
-* **Basic length stats** (number of messages, total length of messages, message average length)  
+* **Basic Length Stats** (number of messages, total length of messages, message average length)  
 
-* **Lexical Stats** (tokens count and vocabulary, lexical diversity)  
+* **Lexical Stats** (tokens count and vocabulary, lexical diversity). Tokens count consider duplicate words, while vocabulary (also called types) is the count of unique words. Lexical richness/diversity is the ratio between vocabulary and tokens count. 
 
-* **Word Count/Frequency** (top N words, word count, words said just by, tf-idf, relevant words by sender, zipf's law)  
+* **Word Count/Frequency** (top N words, words count, words trend, words used just by, relevant words by sender, zipf's law). This can then generalize for all other N-Grams.  
 
-* **N-Gram Count/Frequency** (bi and trigrams by sender, tf-idf)
-
-* **Emoticons Stats** (number of emoticons, emoticon ratio, emoticon count)  
+* **Emoticons Stats** (number of emoticons used, emoticon ratio, emoticon count)  
 
 * **Reply Delay** (reply delay by sender, reply delay by message length, num of sequential messages by sender)  
 
-* **Aggregation**: most of the previous groups include the option of aggregation by sender, or by datetime features (e.g. hour, day, month, year) where relevant
+* **Aggregation** - most of the previous groups include the option of aggregation by sender, or by combination of datetime features (e.g. hour, day, month, year).
 
 **NEW**  
 

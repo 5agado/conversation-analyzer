@@ -11,11 +11,12 @@ class WordsCountStats:
         self.msgs = self.conversation.messages
         self.wordsCount = None
 
-    def loadWordsCount(self, groupByColumns=None):
+    def loadWordsCount(self, groupByColumns=None, ngram_range=(1,1)):
         """
         Generates dataframe with words count for each group-by entry and stores it internally.
         Successive calls on this method will overwrite the stored data with the new results.
 
+        :param ngram_range: ngram to use for count vectorization
         :param groupByColumns: names of features to use to group messages
         :return: none. Results are stored internally
         """
@@ -23,7 +24,7 @@ class WordsCountStats:
             groupByColumns = []
         groupByColumns = groupByColumns + ['sender']
 
-        self.wordsCount = WordsCountStats._computeWordsCount(self.msgs, groupByColumns)
+        self.wordsCount = WordsCountStats._computeWordsCount(self.msgs, groupByColumns, ngram_range)
 
     def getWordsCount(self, words=None, sender=None):
         """
@@ -46,6 +47,17 @@ class WordsCountStats:
 
         return count
 
+    def getWordsUsedJustBy(self, originSender, referenceSender):
+        # collect words
+        wordsCount = self.wordsCount.ix[:,(self.wordsCount.loc[referenceSender]==0)
+                          &(self.wordsCount.loc[originSender]!=0)]
+
+        #transpose to have sender count as columns, and words as rows
+        words = wordsCount.transpose().rename(columns={'sender':'word'})\
+                            .sort_values(originSender, ascending=False)
+
+        return words
+
     def getWordFirstAndLastOccurences(self, word, sender=None):
         """
         Returns when word has been used (non-zero count) for the first and last time.
@@ -59,18 +71,30 @@ class WordsCountStats:
         else:
             return res
 
+    #TODO add total option
+    def getLexicalStats(self, sender=None):
+        wordsCount = self.wordsCount
+        #wordsCount = WordsCountStats._transformWordsCountBasedOnSender(self.wordsCount, sender)
+        res = pd.DataFrame(wordsCount.apply(lambda x : WordsCountStats.lexicalStatsFun(x), axis=1))
+        if sender:
+            if isinstance(res.index, pd.core.index.MultiIndex):
+                res = res.xs(sender, level='sender')
+            else:
+                res = res.loc[sender]
+        return res
+
     @staticmethod
-    def _computeWordsCount(msgs, groupByColumns):
+    def _computeWordsCount(msgs, groupByColumns, ngram_range=(1,1)):
         """
         Generates dataframe with words count for each group-by entry.
         Grouping is done on passed columns plus the sender one.
         """
-
         # Group messages by sender and specified feature, concatenating text field
         grouped_msgs = msgs.groupby(groupByColumns).agg({'text': lambda x: " ".join(x)})
 
         # Count-vectorize msgs, using own defined analyzer (tokenizer)
-        vectorizer = CountVectorizer(analyzer=lambda x: statsUtil.getWords(x))
+        vectorizer = CountVectorizer(tokenizer=lambda x: statsUtil.getWords(x),
+                                     ngram_range=ngram_range)
         X = vectorizer.fit_transform(grouped_msgs['text'].values)
 
         # Create count matrix using words as columns
@@ -141,3 +165,11 @@ class WordsCountStats:
         wordsTrend = wordsCount.apply(lambda x: (x - x.shift(1))).dropna().astype(np.int8)
 
         return wordsTrend
+
+    @staticmethod
+    def lexicalStatsFun(row):
+        tokensCount = sum(row)
+        vocabularyCount = len(row[row>0])
+        return pd.Series({'tokensCount':tokensCount,'vocabularyCount':vocabularyCount,
+                'lexicalRichness':vocabularyCount/tokensCount})
+

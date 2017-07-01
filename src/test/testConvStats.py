@@ -85,9 +85,12 @@ class BasicStatsTestCase(unittest.TestCase):
 
     def test_wordsUsedJustByStats(self):
         conv = self.getConversation(mio.getResourcesPath() + "\\unittest\\test_word_count.txt")
-        wordsUsedBy = conv.stats.getWordsBySender(usedJustBy=True)
-        wordsSaidJustByS1 = wordsUsedBy['S1']
-        wordsSaidJustByS2 = wordsUsedBy['S2']
+        stats = WordsCountStats(conv)
+        stats.loadWordsCount()
+        wordsUsedBy = stats.getWordsUsedJustBy('S1', 'S2')
+        wordsSaidJustByS1 = set(wordsUsedBy.index.values)
+        wordsUsedBy = stats.getWordsUsedJustBy('S2', 'S1')
+        wordsSaidJustByS2 = set(wordsUsedBy.index.values)
 
         sender = {'S2': {'fine', 'sender2', 'xd', ':d'},
                   'S1': {'are', 'how', 'you', 'sender1', 'bye'}}

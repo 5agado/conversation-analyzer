@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from util import statsUtil
 
 
 class IConvStats(metaclass=ABCMeta):
@@ -36,22 +37,28 @@ class IConvStats(metaclass=ABCMeta):
     def generateStatsByYearMonthDayHour(self, statsType, **kwargs):
         return self._generateStats(statsType, ['year', 'month', 'day', 'hour'], **kwargs)
 
-    def _generateStats(self, statsType, groupByColumns=None, **kwargs):
-        if groupByColumns is None: groupByColumns = []
+    def _generateStats(self, statsType, groupByColumns=None, stackStats=False, **kwargs):
+        if groupByColumns is None:
+            groupByColumns = []
+
         if statsType == IConvStats.STATS_NAME_BASICLENGTH:
-            res = self._generateBasicLengthStatsBy(groupByColumns)
+            res = self._generateBasicLengthStatsBy(groupByColumns, **kwargs)
         elif statsType == IConvStats.STATS_NAME_LEXICAL:
-            res = self._generateLexicalStatsBy(groupByColumns)
+            res = self._generateLexicalStatsBy(groupByColumns, **kwargs)
         elif statsType == IConvStats.STATS_NAME_WORDCOUNT:
             res = self._generateWordCountStatsBy(groupByColumns, **kwargs)
         elif statsType == IConvStats.STATS_NAME_EMOTICONS:
-            res = self._generateEmoticonsStatsBy(groupByColumns)
+            res = self._generateEmoticonsStatsBy(groupByColumns, **kwargs)
         elif statsType == IConvStats.STATS_NAME_EMOTICONCOUNT:
             res = self._generateEmoticonCountStatsBy(groupByColumns, **kwargs)
         elif statsType == IConvStats.STATS_NAME_DELAY:
             res = self._generateDelayStats()
         else:
             raise Exception(statsType + ' Stat not implemented')
+
+        if stackStats:
+            res = statsUtil.transformStats(res, 'stat', 'val')
+
         return res
 
     @abstractmethod
