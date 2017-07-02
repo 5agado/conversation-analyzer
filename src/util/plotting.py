@@ -18,7 +18,7 @@ def plotBasicLengthStatsByYearAndMonth(data, yearsToShow=None, targetStats=None,
                                         'stat':targetStats})
 
     g = sns.factorplot(x="month", y="val", row="stat", hue='sender', col='year', data=df,
-                       kind="bar", sharey=False, size=3, aspect=2.5, legend_out=False)
+                       kind="bar", size=3, aspect=2.5, legend_out=False)
     g.fig.suptitle('Basic Length Stats')
     sns.plt.show()
 
@@ -26,7 +26,7 @@ def plotBasicLengthStatsByHour(data, targetStats=None, targetSenders=None, kind=
     df = statsUtil.filter_stats(data, {'sender':targetSenders, 'stat':targetStats})
 
     g = sns.factorplot(x="hour", y="val", row="stat", hue='sender', data=df,
-                       kind=kind, sharey=False, size=3, aspect=2.5, legend_out=False)
+                       kind=kind, size=3, aspect=2.5, legend_out=False)
     g.fig.suptitle('Basic Length Stats - Hour')
     #sns.plt.show()
 
@@ -65,7 +65,8 @@ def plotSingleBasicLengthStatHeatmap(data, stat, targetSender, yearsToShow=None)
 
     def plot(ax, df, count):
         df = df.pivot('month', 'day', stat)
-        ax = sns.heatmap(df, mask=df.isnull(), ax=ax)#cmap=ListedColormap(['red', 'blue'])
+        # TODO share y. Fix it or try factorgrid
+        ax = sns.heatmap(df, mask=df.isnull(), ax=ax, vmin=0, vmax=30000)#cmap=ListedColormap(['red', 'blue'])
         ax.set(ylabel='month' if count == 1 else '')
 
     _plotByYear(df, "{} ({})".format(stat, targetSender), plot, yearsToShow)
@@ -136,10 +137,14 @@ def _plotByYear(data, title, plotFun, yearsToShow=None):
     numberOfYears = len(grouped) if not yearsToShow else len(yearsToShow)
     count = 1
     fig = plt.figure(1)
+    ax = None
     for year, group in grouped:
         if yearsToShow and year not in yearsToShow:
             continue
-        ax = plt.subplot(1,numberOfYears,count)
+        if ax:
+            ax = plt.subplot(1, numberOfYears, count, sharey=ax)
+        else:
+            ax = plt.subplot(1,numberOfYears,count)
         ax.set_title(year)
         plotFun(ax, group, count)
         count += 1

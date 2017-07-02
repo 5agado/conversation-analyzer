@@ -84,6 +84,7 @@ class WordsCountStats:
         return res
 
     @staticmethod
+    # TODO Add options of filter out stopwords
     def _computeWordsCount(msgs, groupByColumns, ngram_range=(1,1)):
         """
         Generates dataframe with words count for each group-by entry.
