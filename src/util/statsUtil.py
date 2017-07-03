@@ -7,6 +7,7 @@ from datetime import datetime
 import re
 import statistics
 import nltk
+import numpy as np
 
 def getCentralTendencyValuesFor(measures):
     mean = measures.mean()
@@ -39,8 +40,11 @@ def getTrigramsCount(text):
 
 def getWords(text):
     mText = text.lower()
-    emoticons = getEmoticonsFromText(mText)
-    words = list(filter(lambda w: len(w) > 0, [cleanWord(w, emoticons) for w in mText.split()]))
+    emoticons = set(getEmoticonsFromText(mText))
+    #words = list(filter(lambda w: len(w) > 0, [cleanWord(w, emoticons) for w in mText.split()]))
+    words = list(filter(lambda w: len(w) > 0,
+                        [w if w in emoticons else re.sub('^[^a-z0-9]*|[^a-z0-9]*$', '', w)
+                         for w in mText.split()]))
     return words
 
 def cleanWord(word, skipSet):
@@ -101,6 +105,7 @@ def filter_stats(stats, filters):
 
     for filter_column, filter_values in filters.items():
         if filter_values:
+            filter_values = np.array(filter_values, dtype=res[filter_column].dtype)
             res = res[res[filter_column].isin(filter_values)]
 
     return res

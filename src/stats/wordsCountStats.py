@@ -26,18 +26,32 @@ class WordsCountStats:
 
         self.wordsCount = WordsCountStats._computeWordsCount(self.msgs, groupByColumns, ngram_range)
 
-    def getWordsCount(self, words=None, sender=None):
+    def loadWordsCountFromFile(self, filepath, indexCols=None):
+        """
+        Load previously exported words count in this stats instance.
+        :param indexCols: columns to set as index
+        :param filepath: filepath of the csv words count file
+        :return: none. words-count data is stored in this stats instance
+        """
+        self.wordsCount = pd.read_csv(filepath, index_col=indexCols)
+
+    def getWordsCount(self, words=None, sender=None, stopWords=None):
         """
         Returns count for specified words.
+        :param stopWords: words to ignore
         :param words: lookup words, if none return all present words
         :param sender: if specified, just consider words occurrences for such sender, otherwise consider all senders (total)
         :return: a wordsCount dataframe
         """
-        if not words:
-            return WordsCountStats._transformWordsCountBasedOnSender(self.wordsCount, sender)
+        if not stopWords: stopWords = []
 
-        # Consider only words that are present
-        words = [w for w in words if w in self.wordsCount.columns]
+        # if no words have been specified considering all present ones not in stopwords
+        if not words:
+            words = list(filter(lambda x : x not in stopWords, self.wordsCount.columns.values))
+        # Consider only words that are present and not in stopwords
+        else:
+            words = list(filter(lambda x : ((x not in stopWords)and(x in words)),
+                                self.wordsCount.columns.values))
 
         # If no word is present, return None
         if not words:
@@ -159,6 +173,11 @@ class WordsCountStats:
                 res = wordsCount.groupby(level=indexNames).sum()
 
         return res
+
+    @staticmethod
+    def _normalizeWordsCount(wordsCount):
+        df = wordsCount.apply(lambda x : x/sum(x), axis=0)
+        return df
 
     @staticmethod
     def _computeWordsTrend(wordsCount, sender=None):

@@ -14,6 +14,7 @@ class ConvStatsDataframe(IConvStats):
     def __init__(self, conversation):
         super().__init__(conversation)
         self.df = self.conversation.messages
+        self.wordsCountStats = None
 
     def getMessagesTotalLength(self):
         msgsLen = self.df['text'].apply(lambda x: len(x))
@@ -40,13 +41,19 @@ class ConvStatsDataframe(IConvStats):
         return res
 
     def _generateWordCountStatsBy(self, groupByColumns=None, ngram_range=(1,1)):
-        stats = WordsCountStats(self.conversation)
-        stats.loadWordsCount(groupByColumns, ngram_range)
-        return stats
+        self.wordsCountStats = WordsCountStats(self.conversation)
+        self.wordsCountStats.loadWordsCount(groupByColumns, ngram_range)
+        return self.wordsCountStats
 
-    def _generateLexicalStatsBy(self, groupByColumns=None):
-        wordCountStats = self._generateWordCountStatsBy(groupByColumns, (1,1))
-        lexicalStats = wordCountStats.getLexicalStats()
+    def _generateLexicalStatsBy(self, groupByColumns=None, useCachedCountStats=False):
+        if useCachedCountStats:
+            if not self.wordsCountStats:
+                print("No cached count stats present")
+                return None
+            wordsCountStats = self.wordsCountStats
+        else:
+            wordsCountStats = self._generateWordCountStatsBy(groupByColumns, (1,1))
+        lexicalStats = wordsCountStats.getLexicalStats()
         return lexicalStats
 
     def _generateEmoticonCountStatsBy(self, groupByColumns=None, emoticon=None):

@@ -70,9 +70,6 @@ If you are not familiar or not willing to check out the notebook, you can still 
 * **Sentiment Analysis** (joy, anger, disgust, fear values via [IBM Watson Tone Analyzer Service](http://www.ibm.com/watson/developercloud/tone-analyzer.html))
 
 ## TODO
-    * option of loading words count stats in class (also for computing directly lexical stats)
-    * options of filtering stopwords
-    * option normalize by len msgs (for example hour and month word count)
     * different-conversations comparison
     * option of using normal login for facebook, then collect needed info (try mechanize)
 

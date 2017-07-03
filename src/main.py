@@ -52,15 +52,8 @@ def main(_):
         mio.printLexicalStats(stats)
 
     if P_WORDS_COUNT:
-        statsFolder = os.path.dirname(conv.filepath) + '\\stats'
-        if not os.path.exists(statsFolder):
-            os.makedirs(statsFolder)
         stats = conv.stats.generateStats(IConvStats.STATS_NAME_WORDCOUNT)
-        mio.printDataFrameToFile(stats, statsFolder + '\\' + 'wordCount.txt')
-
-    #Works just with two senders
-    if P_WORDS_USEDJUSTBY:
-        mio.printWordsUsedJustByToFile(conv)
+        mio.saveDfToStatsFolder(conv, stats, 'wordCount.csv')
 
     if P_EMOTICONS_STATS:
         stats = conv.stats.generateStats(IConvStats.STATS_NAME_EMOTICONS)

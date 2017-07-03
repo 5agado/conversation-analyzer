@@ -104,25 +104,11 @@ def printEmoticonsStats(emoticonsStatsDf):
 
     logger.info('-'*10)
 
-def printWordsBySender(conv):
-    data = conv.stats.getWordsBySender()
-    statsFolder = os.path.dirname(conv.filepath) + '\\stats'
+def saveDfToStatsFolder(conv, df, filename, saveIndex=True):
+    statsFolder = os.path.join(os.path.dirname(conv.filepath), 'stats')
     if not os.path.exists(statsFolder):
         os.makedirs(statsFolder)
-    for sender in conv.senders:
-        words = data[sender]
-        printListToFile(words, statsFolder + "\\wordsUsedBy" + sender + ".txt",
-                    "#Words by Relevance")
-
-def printWordsUsedJustByToFile(conv):
-    data = conv.stats.getWordsBySender(usedJustBy=True)
-    statsFolder = os.path.dirname(conv.filepath) + '\\stats'
-    if not os.path.exists(statsFolder):
-        os.makedirs(statsFolder)
-    for sender in conv.senders:
-        wordsSaidJustBySender = data[sender]
-        printListToFile(wordsSaidJustBySender, statsFolder + "\\wordsSaidJustBy" + sender + ".txt",
-                    "#Words said just by " + sender)
+    df.to_csv(os.path.join(statsFolder, filename), index=saveIndex)
 
 def printDelayStatsFor(conv):
     delay = conv.stats.getDelayStats()
@@ -132,11 +118,6 @@ def printDelayStatsFor(conv):
         msg = "Between {} and {}".format(s.split(':')[0], s.split(':')[1])
         logger.info('{} : {}'.format(msg, d))
     logger.info('-'*10)
-
-def printDataFrameToFile(df, filepath):
-    #df.index.name = aggType
-    #df.sort_index(inplace=True)
-    df.to_csv(filepath)
 
 def printDictToFile(d, title, filepath):
     with open(filepath, "w+", encoding="utf8") as f:
