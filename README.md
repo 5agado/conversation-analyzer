@@ -70,8 +70,12 @@ If you are not familiar or not willing to check out the notebook, you can still 
 * **Sentiment Analysis** (joy, anger, disgust, fear values via [IBM Watson Tone Analyzer Service](http://www.ibm.com/watson/developercloud/tone-analyzer.html))
 
 ## TODO
-    * different-conversations comparison
-    * option of using normal login for facebook, then collect needed info (try mechanize)
+* different-conversations comparison
+* move from descriptive to predictive analytics
+* option of using normal login for Facebook, then collect needed info (try mechanize)
+* try analysis with [dataset_1](https://chenhaot.com/pages/changemyview.html), [??dataset_2](http://freeconnection.blogspot.fr/2016/04/conversational-datasets-for-train.html)
+* better text analysis and language model of your text (from single case conversation, to join of all data you can collect) [link_1](http://textalyser.net/index.php?lang=en#analysis), [link_2]( http://www.expresso-app.org/metrics)
+* combine with activity monitoring of users (e.g. Facebook)
 
 ## License
 

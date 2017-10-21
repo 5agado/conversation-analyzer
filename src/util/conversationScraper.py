@@ -61,7 +61,7 @@ class ConversationScraper:
     POST Request all header:
 
     "Host": "www.facebook.com",
-    "Origin": "http://www.facebook.com",
+    "Origin": "https://www.facebook.com",
     "Referer": "https://www.facebook.com",
     "accept-encoding": "gzip,deflate",
     "accept-language": "en-US,en;q=0.8",
@@ -79,7 +79,7 @@ class ConversationScraper:
         :return: the response content
         """
         headers = {"Host": "www.facebook.com",
-                   "Origin":"http://www.facebook.com",
+                   "Origin":"https://www.facebook.com",
                    "Referer":"https://www.facebook.com",
                    "accept-encoding": "gzip,deflate",
                    "accept-language": "en-US,en;q=0.8",
