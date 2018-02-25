@@ -187,7 +187,7 @@ class ConversationScraper:
 
         self.writeMessages(messages)
 
-def main(_):
+def main(args=None):
     parser = argparse.ArgumentParser(description='Conversation Scraper')
     parser.add_argument('--id', metavar='conversationID', dest='convID', required=True)
     parser.add_argument('--size', metavar='chunkSize', type=int, dest='chunkSize', default=2000,

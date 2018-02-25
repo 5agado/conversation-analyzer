@@ -64,7 +64,7 @@ def parseConversation(convPath, out, authors):
     for msg in messages:
         f.write(msg + "\n")
 
-def main(_):
+def main(args=None):
     parser = argparse.ArgumentParser(description='Conversation Parser')
     parser.add_argument('--in', metavar='conversationPath', dest='convPath', required=True)
     parser.add_argument('--out', metavar='outputFile', dest='out', required=True)

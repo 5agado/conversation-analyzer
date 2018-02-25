@@ -12,16 +12,13 @@ Conversation format example (based on the current parser):
     2012.06.18 17:27:42 SENDER_2 Message text from sender2
 
 ## Usage
-Each of the three components (i.e. scraper, parser, analyzer) can be run separately. 
-The analyzer can be accessed via the *main.py* script contained in the *src* folder. It will log a set of basic stats for the overall conversation.
-Scraper ( *conversationScraper.py* ) and parser ( *conversationParser.py* ) are instead inside the *util* folder. 
+Run
 
-For each see the help menu (-h or --help) for a detailed usage description.
+     python setup.py install
+     
+You will then be able to run scraper and parser via the `conversation-scraper` and `conversation-parser` commands.
 
-Basic configurations for all modules can be managed via the *config.ini* file. The location of the config file to be used should be passed via *--config* argument.   
-
-### Requirements
-The only additional requirement for parser and scraper is the *requests* package. For the analyzer I used Conda; *requirements.txt* is the exported environment file. See [here](http://conda.pydata.org/docs/using/envs.html#share-an-environment) for a guide on how to manage Conda environments.
+See the following sections for a quick overview of the necessary steps, and check the help menu (-h or --help) for a detailed usage description.
 
 ## Scraper
 In order to access Facebook conversations the following parameters are required: *cookie* and *fb_dtsg* and conversation ID.
@@ -45,6 +42,8 @@ Additionally, via *--authors*, you can pass a dictionary like structure to provi
     --authors "{"11234":"SENDER_1", "112345":"SENDER_2"}"
 
 ## Analyzer
+Compared to basic scraping this phase has more dependencies; see the *requirements.txt* file and [here](http://conda.pydata.org/docs/using/envs.html#share-an-environment) for a guide on how to manage environments in Conda.
+
 **I have added two Jupyter notebooks for easier exploration of the various statistics and analytical results**. Just check out [Basic Stats](Conversation%20Analyzer%20-%20Basic%20Stats) or [Words Stats](Conversation%20Analyzer%20-%20Words%20Stats). I have left previous outputs as examples, but I encourage you to explore your own data and tweak the stats and plots based on your preferences.
 
 If you are not familiar or not willing to check out the notebook, you can still access the old *main.py* for automatic stats running. It requires as parameter the filepath of the conversation to be analyzed; it will then log and generate a set of basic stats for the overall conversation.
