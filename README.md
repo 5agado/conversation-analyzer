@@ -20,6 +20,9 @@ You will then be able to run scraper and parser via the `conversation-scraper` a
 
 See the following sections for a quick overview of the necessary steps, and check the help menu (-h or --help) for a detailed usage description.
 
+#### Using Facebook JSON Exported Data
+Run `python3 utils/convert.py --in MESSAGE_ARCHIVE_JSON --out CONVERTED_FILE` to convert from Facebook's JSON format to the format used by conversation-analyzer.
+
 ## Scraper
 In order to access Facebook conversations the following parameters are required: *cookie* and *fb_dtsg* and conversation ID.
 
