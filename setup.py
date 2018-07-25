@@ -9,7 +9,9 @@ setup(
     license="Apache 2.0",
     packages=find_packages(),
     entry_points={
-        'console_scripts': ['conversation-scraper=src.util.conversationScraper:main'],
+        'console_scripts': ['conversation-scraper=src.util.conversationScraper:main',
+                            'conversation-parser=src.util.conversationParser:main',
+                            'convert=src.util.convert:main'],
     },
     install_requires=[
        'requests',

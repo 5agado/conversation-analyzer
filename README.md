@@ -11,16 +11,24 @@ Conversation format example (based on the current parser):
     2012.06.17 15:27:42 SENDER_1 Message text from sender1
     2012.06.18 17:27:42 SENDER_2 Message text from sender2
 
+## **(NEW)** Download your Facebook Data
+You can now download your data directly from Facebook interface. See [Access Your Information](https://www.facebook.com/your_information/) for info and instructions.
+In this project we are interested solely on the *Messages* data. Once downloaded you will be able to convert the message data from JSON to the format required by this repo thanks to the convert util kindly provided by [landalex](https://github.com/landalex). See the following section for a detailed usage description.
+
+
 ## Usage
 Run
 
      python setup.py install
-     
-You will then be able to run scraper and parser via the `conversation-scraper` and `conversation-parser` commands.
 
+If you downloaded your data directly from Facebook you will just need to convert it via `convert.py --in MESSAGE_ARCHIVE_JSON --out CONVERTED_FILE`.
+
+If you instead rely on the scraping way, you can run scraper and parser via the `conversation-scraper` and `conversation-parser` commands.
 See the following sections for a quick overview of the necessary steps, and check the help menu (-h or --help) for a detailed usage description.
 
 ## Scraper
+Scraper has been deprecated in favor of previous more immediate method. If you still interested in using the scraper, keep in mind [this current issue](https://github.com/5agado/conversation-analyzer/issues/12).
+
 In order to access Facebook conversations the following parameters are required: *cookie* and *fb_dtsg* and conversation ID.
 
 Such data can be found via the following procedure:
