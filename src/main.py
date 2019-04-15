@@ -53,7 +53,7 @@ def main(_):
 
     if P_WORDS_COUNT:
         stats = conv.stats.generateStats(IConvStats.STATS_NAME_WORDCOUNT)
-        mio.saveDfToStatsFolder(conv, stats, 'wordCount.csv')
+        mio.saveDfToStatsFolder(conv, stats.wordsCount, 'wordCount.csv')
 
     if P_EMOTICONS_STATS:
         stats = conv.stats.generateStats(IConvStats.STATS_NAME_EMOTICONS)
